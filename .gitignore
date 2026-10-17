@@ -2,10 +2,18 @@
 __pycache__/
 .pytest_cache/
 *.py[cod]
+*.log
+.DS_Store
+Thumbs.db
 
-# Keep datasets and generated model outputs out of Git.
+# Keep local credentials out of Git.
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Datasets, manifests with identifiers, and generated model outputs stay local.
 data/**
 !data/.keep
 artifacts/**
 !artifacts/.keep
-.streamlit/secrets.toml
