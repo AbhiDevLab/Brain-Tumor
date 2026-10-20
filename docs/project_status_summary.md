@@ -90,3 +90,14 @@ The updated local deliverables created on 20 October 2026 are:
 - `Brain_Tumor_Updated_PDFs_and_Flowchart.zip`
 
 The updated flowchart was checked in the PDF renderings. It clearly separates established prior methods, our planned baseline, controlled experiments, evaluation criteria and the unvalidated status of the proposed contribution. A separate Markdown version of the flowchart and presentation speech is maintained in the repository's `docs/` directory.
+
+
+## Binary PDF publishing status
+
+The Markdown flowchart source, presentation speech, project summary, and README links are published in this repository. The updated PDF and PNG assets have **not yet been committed as binary files**. To add them, download and extract the updated deliverables ZIP from the ChatGPT conversation, then run the included `publish_to_github.ps1` from the extracted folder:
+
+```powershell
+.\publish_to_github.ps1 -RepoPath "C:\Dev\Web\Brain-Tumor"
+```
+
+The script checks the repository origin, requires a clean `main` worktree, fast-forwards from GitHub, copies the PDF/PNG assets into `docs/research/reports/`, stages only those assets, and commits and pushes them. Git must be authenticated on the Windows machine.
