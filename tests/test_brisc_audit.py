@@ -101,9 +101,9 @@ def test_manifest_hash_validation_and_cross_split_overlap(tmp_path):
     image_hash = hashlib.sha256(train_image.read_bytes()).hexdigest()
     manifest = tmp_path / "manifest.csv"
     manifest.write_text(
-        "relative_path,task,split,is_mask,sha256\\n"
-        f"classification_task/train/glioma/train.jpg,classification,train,False,{image_hash}\\n"
-        f"classification_task/test/glioma/test.jpg,classification,test,False,{image_hash}\\n",
+        "relative_path,task,split,is_mask,sha256\n"
+        f"classification_task/train/glioma/train.jpg,classification,train,False,{image_hash}\n"
+        f"classification_task/test/glioma/test.jpg,classification,test,False,{image_hash}\n",
         encoding="utf-8",
     )
 
