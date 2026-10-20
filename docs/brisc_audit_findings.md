@@ -25,6 +25,10 @@ Examples from the source filenames:
 
 These exact copies contaminate an otherwise unseen-test evaluation if both copies are allowed to reach training and testing. The original download should be preserved for traceability, but do not train the first benchmark from the original train folders unchanged.
 
+## Discrepancy to verify against the published methods
+
+The published BRISC dataset paper says that exact and near-duplicate images were removed **before** the train/test split to avoid leakage, and that manual visual/metadata checks were used to reduce likely same-subject overlap. See the [Scientific Data paper, Data Preprocessing and Imaging Details](https://www.nature.com/articles/s41597-026-06753-y). Our byte-level audit of the downloaded Kaggle release nevertheless found exact image hashes on both sides of the split. This is a material discrepancy between the paper's described procedure and the data we received. Do not infer intent or conclude the paper's experiments are invalid from this single audit. First cross-check the Kaggle manifest's stored SHA-256 values against the file hashes, confirm the dataset snapshot/version, and compare with the authors' baseline notebook/data release. Record the result.
+
 The `prepare_brisc.py` utility makes a separate copy, leaves the supplied test files unchanged, and removes from the training side any exact image hashes also found in test. It also deduplicates identical training samples when their labels/targets are consistent and excludes ambiguous duplicate-image groups when labels or segmentation masks conflict. The preparation report records removed paths and hashes.
 
 **Scope limitation:** an exact hash check only finds byte-identical files. It does not find resized/augmented/near-duplicate images, and it cannot establish patient-wise isolation.
