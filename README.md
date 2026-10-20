@@ -109,7 +109,7 @@ python prepare_brisc.py --root /content/kaggle_data/brisc2025 --output /content/
 
 The output includes `prepared_manifest.csv` and `preparation_report.json`. Patient-level independence cannot be confirmed if the dataset provides no patient/subject IDs. Exact hashes do not detect near-duplicates.
 
-The audit run captured on 20 October 2026 found seven groups of byte-identical images crossing train/test in each task; nine training file paths were affected because one duplicate group included three training copies. Re-audit the prepared output before training.
+The audit run captured on 20 October 2026 found seven groups of byte-identical images crossing train/test in each task; nine training file paths were affected because one duplicate group included three training copies. Before training, inspect the raw audit's manifest-checksum results and confirm that the preparation report records zero train/validation-to-test image-hash overlap.
 
 Sampled masks contain near-black background values (0–7) and near-white foreground values (mostly 248–255). The current loader thresholds at 128 and resizes masks using nearest-neighbor interpolation. This preprocessing choice still needs review against the full audit and visual examples; it is not a claim of complete annotation validation.
 
