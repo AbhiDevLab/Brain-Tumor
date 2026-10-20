@@ -87,3 +87,29 @@ def test_manifest_audit_reports_patient_overlap(tmp_path):
     assert report["available"] is True
     assert report["patient_or_subject_ids_crossing_splits"] == 1
     assert report["patient_or_subject_overlap_examples"][0]["id"] == "p001"
+
+
+def test_manifest_hash_validation_and_cross_split_overlap(tmp_path):
+    train_image = tmp_path / "classification_task" / "train" / "glioma" / "train.jpg"
+    test_image = tmp_path / "classification_task" / "test" / "glioma" / "test.jpg"
+    _write_image(train_image, pixels=70)
+    test_image.parent.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copy2(train_image, test_image)
+
+    import hashlib
+    image_hash = hashlib.sha256(train_image.read_bytes()).hexdigest()
+    manifest = tmp_path / "manifest.csv"
+    manifest.write_text(
+        "relative_path,task,split,is_mask,sha256\n"
+        f"classification_task/train/glioma/train.jpg,classification,train,False,{image_hash}\n"
+        f"classification_task/test/glioma/test.jpg,classification,test,False,{image_hash}\n",
+        encoding="utf-8",
+    )
+
+    report = audit_manifest(tmp_path)
+
+    assert report["file_path_validation"]["files_found_and_hashed"] == 2
+    assert report["file_path_validation"]["missing_or_unresolved_files"] == 0
+    assert report["sha256_validation"]["files_with_hash_mismatches"] == 0
+    assert report["manifest_image_hashes_crossing_train_test"]["duplicate_hash_groups"] == 1

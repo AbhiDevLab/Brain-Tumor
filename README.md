@@ -10,6 +10,7 @@ A small research project for classifying 2D brain MRI images and segmenting tumo
 - Dataset checks for class distribution, image duplicates across splits, and image/mask pairing.
 - A BRISC 2025 preflight auditor for class counts, mask pairing, sampled mask pixel intensities, exact cross-split duplicates, and available manifest identifiers.
 - A Streamlit interface scaffold for local experiments.
+- `prepare_brisc.py` to remove exact train/test image-hash overlap from the training side, create a reproducible validation split, and preserve official test files.
 
 No model has been trained on the project dataset yet. The repository does not contain trained weights or validated performance results. This is a research prototype, not a clinical diagnostic tool.
 
@@ -17,6 +18,7 @@ No model has been trained on the project dataset yet. The repository does not co
 
 - [Research vs. proposed contribution flowchart](docs/research_gap_and_proposed_contribution.md) — distinguishes established methods from the baseline and experiments we plan to test.
 - [Paper reproduction and claim-verification plan](docs/paper_reproduction_plan.md) — maps the previously reviewed studies to what can and cannot be reproduced, with comparison rules.
+- [BRISC audit findings and split limitations](docs/brisc_audit_findings.md) — records the observed exact duplicate overlap and missing patient identifiers.
 - [Presentation speech](docs/presentation_speech.md) — approx. two-minute explanation of the flowchart.
 - [Consolidated project status and next steps](docs/project_status_summary.md) — current implementation, evaluation status, and Windows setup checklist.
 - [Research documentation index](docs/README.md).
@@ -83,6 +85,35 @@ python audit_brisc.py --root /content/kaggle_data/brisc2025 --output /content/br
 The audit checks folder/class counts, image-mask filename pairing, a sample of mask grayscale values, exact-byte duplicates across the dataset's train/test splits, and whether the manifest provides patient/subject identifiers. It does **not** detect near-duplicates or prove patient-level separation when identifiers are unavailable. The mask binarization threshold defaults to 128 because reviewed examples contained near-black values (0–7) and near-white values (248–255); inspect the full audit output before locking preprocessing.
 
 Keep datasets and trained weights outside Git.
+
+### Audit and prepare BRISC 2025
+
+After downloading and extracting the dataset, audit the raw files first:
+
+```bash
+python audit_brisc.py --root /path/to/brisc2025 --output /path/to/brisc_audit.json
+```
+
+Then create a separately prepared dataset. The script retains the supplied test images and masks, removes from the training side any exact image hashes also present in test, removes safe training-only exact duplicates, and takes validation samples from the remaining training set:
+
+```bash
+python prepare_brisc.py --root /path/to/brisc2025 --output /path/to/processed_brisc --val-fraction 0.15 --seed 42
+```
+
+In Colab, use:
+
+```bash
+python audit_brisc.py --root /content/kaggle_data/brisc2025 --output /content/brisc_audit.json
+python prepare_brisc.py --root /content/kaggle_data/brisc2025 --output /content/processed_brisc --val-fraction 0.15 --seed 42
+```
+
+The output includes `prepared_manifest.csv` and `preparation_report.json`. Patient-level independence cannot be confirmed if the dataset provides no patient/subject IDs. Exact hashes do not detect near-duplicates.
+
+The audit run captured on 20 October 2026 found seven groups of byte-identical images crossing train/test in each task; nine training file paths were affected because one duplicate group included three training copies. Before training, inspect the raw audit's manifest-checksum results and confirm that the preparation report records zero train/validation-to-test image-hash overlap.
+
+Sampled masks contain near-black background values (0–7) and near-white foreground values (mostly 248–255). The current loader thresholds at 128 and resizes masks using nearest-neighbor interpolation. This preprocessing choice still needs review against the full audit and visual examples; it is not a claim of complete annotation validation.
+
+Keep raw/prepared datasets and model weights outside Git.
 
 ## Experiments
 

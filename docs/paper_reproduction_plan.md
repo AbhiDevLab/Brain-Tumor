@@ -6,7 +6,29 @@ This plan is designed to distinguish (1) a paper's reported result, (2) an imple
 
 ## 1. Research sources already reviewed
 
-### A. BRISC dataset and Swin-HAFNet / Swin-HAFUNet line
+### A. Published BRISC dataset paper: baseline claims to reproduce first
+
+- Fateh et al., **“BRISC: Annotated Dataset for Brain Tumor Segmentation and Classification,”** *Scientific Data* 13, Article 361 (published 5 February 2026). https://www.nature.com/articles/s41597-026-06753-y
+- Dataset: https://www.kaggle.com/datasets/briscdataset/brisc2025/
+- Maintainer's notebook: https://www.kaggle.com/code/briscdataset/getting-started-with-brisc-2025
+
+The published paper reports that the custom code for its baseline models is available at the BRISC Kaggle repository. Use that official code/notebook as the first reference implementation and inspect its exact split, preprocessing, training settings and metric definitions.
+
+**Published results described in the paper:**
+
+| Task | Model | Paper-reported metric |
+|---|---|---:|
+| Classification | EfficientNet-B0 | Accuracy 0.9920 ± 0.0000; weighted F1 0.9920 ± 0.0000 |
+| Binary tumor segmentation, aggregated by tumor type | U-Net | Weighted mIoU 75.7% |
+| Binary tumor segmentation, aggregated by tumor type | SaberNet | Weighted mIoU 80.6% |
+
+The paper says each classification baseline was trained/tested three times; these results are the paper's values, not reproduced results from this repository. Confirm details from the full tables and the authors' code before making a strict comparison.
+
+**Critical data integrity discrepancy:** the paper states that exact and near-duplicate images were removed before its train/test split, but our SHA-256 audit of the Kaggle download found seven exact duplicate groups crossing train/test in each task. Our downloaded manifest also has no explicit patient/subject identifier. The audit and the paper therefore do not yet support a claim of patient-independent separation. Cross-check each manifest SHA-256 against the downloaded file hashes, confirm the release snapshot, and inspect the authors' implementation before drawing conclusions. The cleaned benchmark in this project is a separate, exact-duplicate-decontaminated variant; it must not be described as the untouched official split.
+
+**Comparison protocol:** our current EfficientNet-B0 and U-Net scripts are independent baselines. Even when trained on the same dataset, they do not count as a faithful reproduction of the published results unless preprocessing, splits, architecture, training schedule, and metric definitions match. Report raw metrics, deviations, and whether results are reproduced or only comparable.
+
+### B. BRISC dataset and Swin-HAFNet / Swin-HAFUNet line### A. BRISC dataset and Swin-HAFNet / Swin-HAFUNet line
 
 - Dataset paper: Fateh et al., **“BRISC: Annotated Dataset for Brain Tumor Segmentation and Classification,”** *Scientific Data* (2026). https://doi.org/10.1038/s41597-026-06753-y
 - Related method manuscript: Fateh et al., **“BRISC: Annotated Dataset for Brain Tumor Segmentation and Classification with Swin-HAFNet,”** arXiv:2506.14318. https://arxiv.org/abs/2506.14318
