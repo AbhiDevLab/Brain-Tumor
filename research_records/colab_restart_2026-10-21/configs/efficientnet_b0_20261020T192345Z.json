@@ -1,6 +1,6 @@
 {
   "run_id": "20261020T192345Z",
-  "status": "configured; training starts after configuration backup",
+  "status": "configured; waiting for training launch",
   "created_utc": "2026-10-20T19:23:45.616772+00:00",
   "repository": "AbhiDevLab/Brain-Tumor",
   "research_branch": "research/colab-baseline-2026-10-21",
@@ -26,5 +26,7 @@
     "train": 4210,
     "val": 745,
     "test": 1000
-  }
+  },
+  "configuration_backup_verified": true,
+  "github_push_helper_error": "Previous status push failed due to a temporary helper syntax error."
 }
