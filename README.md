@@ -12,6 +12,15 @@ A small research project for classifying 2D brain MRI images and segmenting tumo
 
 No model has been trained on the project dataset yet. The repository does not contain trained weights or validated performance results. This is a research prototype, not a clinical diagnostic tool.
 
+## Research documents and presentation
+
+- [Research vs. proposed contribution flowchart](docs/research_gap_and_proposed_contribution.md) — distinguishes established methods from the baseline and experiments we plan to test.
+- [Presentation speech](docs/presentation_speech.md) — approx. two-minute explanation of the flowchart.
+- [Consolidated project status and next steps](docs/project_status_summary.md) — current implementation, evaluation status, and Windows setup checklist.
+- [Research documentation index](docs/README.md).
+
+The proposed improvement is **not yet demonstrated**. We will only report gains if controlled, held-out evaluation supports them.
+
 ## Setup
 
 Python 3.11 is recommended. From the repository directory:
@@ -59,7 +68,7 @@ The matching image and mask files must share the same filename stem. Review the 
 
 The first segmentation comparison keeps the U-Net and data split fixed while changing the loss from binary cross-entropy to binary cross-entropy plus Dice loss. Dice score is the primary overlap metric; tumor recall is tracked to guard against missed tumor pixels. More complex attention or detector models come later only if the baseline results justify them.
 
-See `docs/experiment_plan.md` and `docs/implementation_status.md` for the working plan and current limitations.
+See `docs/experiment_plan.md`, `docs/implementation_status.md`, and the research links above for the working plan and current limitations.
 
 ## Scope and limitations
 
