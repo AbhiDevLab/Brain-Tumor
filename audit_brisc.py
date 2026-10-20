@@ -101,13 +101,23 @@ def audit_segmentation(root: Path, sample_masks: int = 60) -> dict:
         image_dir = task_root / split / "images"
         mask_dir = task_root / split / "masks"
 
-        if not image_dir.is_dir() or not mask_dir.is_dir():
+        if not image_dir.is_dir():
             result["splits"][split] = {
-                "error": f"Missing image or mask directory: {image_dir} / {mask_dir}"
+                "error": f"Missing image directory: {image_dir}",
+                "images": 0,
+                "masks": len(image_files(mask_dir)),
+                "paired_by_filename_stem": 0,
+                "images_missing_masks": [],
+                "image_missing_mask_count": 0,
+                "masks_without_images": [],
+                "orphan_mask_count": len(image_files(mask_dir)),
             }
             pair_errors = True
             continue
 
+        # A missing masks directory is audited as an empty mask set. This
+        # preserves actionable counts instead of exiting before reporting
+        # that every image in the split is missing its annotation.
         images = image_files(image_dir)
         masks = image_files(mask_dir)
         mask_by_stem = {path.stem: path for path in masks}
