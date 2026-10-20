@@ -418,8 +418,8 @@ def prepare_dataset(
     report["manifest_path"] = str(manifest_path)
     report["prepared_manifest_rows"] = len(manifest_rows)
     report_path = output / "preparation_report.json"
-    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     report["report_path"] = str(report_path)
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report
 
 
