@@ -1,0 +1,4 @@
+Existing repository test suite before training:
+18 passed in 3.23s
+Pytest exit code: 0
+Audit and preparation CLI help checks passed.

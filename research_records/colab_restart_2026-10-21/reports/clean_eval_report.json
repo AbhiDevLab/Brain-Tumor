@@ -1,0 +1,15 @@
+{
+  "created_utc": "2026-10-20T19:05:18.374474+00:00",
+  "protocol": "Keep one representative when duplicate images have identical masks; exclude every member of groups with conflicting masks.",
+  "source_test_pairs": 860,
+  "unique_image_hashes": 856,
+  "consistent_duplicate_groups": 2,
+  "conflicting_duplicate_groups": 2,
+  "excluded_entries": 6,
+  "clean_evaluation_pairs": 854,
+  "all_copied_file_hashes_verified": true,
+  "patient_level_isolation_confirmed": false,
+  "near_duplicate_detection_performed": false,
+  "manifest": "/content/drive/MyDrive/BrainTumorResearch/data/segmentation_unique_eval/clean_eval_manifest.csv",
+  "exclusions": "/content/drive/MyDrive/BrainTumorResearch/data/segmentation_unique_eval/excluded_duplicate_entries.csv"
+}

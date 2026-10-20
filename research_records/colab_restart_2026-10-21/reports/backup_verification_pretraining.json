@@ -1,0 +1,47 @@
+{
+  "verified_utc": "2026-10-20T19:09:19.306218+00:00",
+  "classification_counts": {
+    "train": {
+      "glioma": 974,
+      "meningioma": 1113,
+      "pituitary": 1224,
+      "no_tumor": 899
+    },
+    "val": {
+      "glioma": 173,
+      "meningioma": 197,
+      "pituitary": 216,
+      "no_tumor": 159
+    },
+    "test": {
+      "glioma": 254,
+      "meningioma": 306,
+      "pituitary": 300,
+      "no_tumor": 140
+    }
+  },
+  "segmentation_counts": {
+    "train": {
+      "images": 3301,
+      "masks": 3301
+    },
+    "val": {
+      "images": 584,
+      "masks": 584
+    },
+    "test": {
+      "images": 860,
+      "masks": 860
+    }
+  },
+  "prepared_manifest_rows": 10700,
+  "verified_image_hashes": 10700,
+  "verified_mask_hashes": 4745,
+  "clean_evaluation_pairs": 854,
+  "archive_sha256_verified": true,
+  "inventory_file_count": 17161,
+  "inventory_total_bytes": 548857198,
+  "inventory_path": "/content/drive/MyDrive/BrainTumorResearch/manifests/backup_inventory_pretraining.json",
+  "patient_level_isolation_confirmed": false,
+  "training_authorized_by_drive_verification": true
+}

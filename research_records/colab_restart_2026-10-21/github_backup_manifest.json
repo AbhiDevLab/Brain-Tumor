@@ -1,0 +1,67 @@
+{
+  "created_utc": "2026-10-20T19:13:44.649901+00:00",
+  "files": [
+    {
+      "path": "research_records/colab_restart_2026-10-21/README.md",
+      "size_bytes": 510,
+      "sha256": "5c94e35ff5e7f743f6e65b2099df6dc8def1e3c685394826a40d7943d22ed492"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/configs/baseline_run_config.json",
+      "size_bytes": 1669,
+      "sha256": "ad832b1a0c565391fbff20a9390db5a9b39193081b85e1eec25c0af50b45bbb3"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/logs/pretraining_test_summary.txt",
+      "size_bytes": 133,
+      "sha256": "dc687578acd52eabc5e690458830a3574813c2b306160995d8f31cbb975cf224"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/manifests/backup_inventory_pretraining.json",
+      "size_bytes": 4517504,
+      "sha256": "c466101dce97fcc4375d826527e479cfb1332869ea2bfffafcc136b294122141"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/manifests/brisc_download_record.json",
+      "size_bytes": 470,
+      "sha256": "d304dd8a1d266d8f4378bb92287fb8ba90163378c3faf2b8c6ed43093a0b4ad4"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/manifests/clean_eval_manifest.csv",
+      "size_bytes": 387787,
+      "sha256": "c10094fe1ae6ab6c7740854d6fb1b267d51675360f104cf625a227bbc23d1138"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/manifests/excluded_duplicate_entries.csv",
+      "size_bytes": 2881,
+      "sha256": "7ba4f1057ce39df234c4dc35cc11f8b6311079d68ec0350408d9dd94c9260b07"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/manifests/prepared_manifest.csv",
+      "size_bytes": 4378974,
+      "sha256": "19b2fbcbda50451d7a1469db2508a4345bbc9f2c90b09dfaa4be7d5af2f34e92"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/reports/backup_verification_pretraining.json",
+      "size_bytes": 1094,
+      "sha256": "a9633cd23f3c942fa656e6e2d32a8a2d290d754ede9b3f0adfe0fd81d4435f37"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/reports/brisc_raw_audit.json",
+      "size_bytes": 23177,
+      "sha256": "632c2f2e71538992051185d8a4e88e5993d7a9441bdef4e107f18b78b897a20c"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/reports/clean_eval_report.json",
+      "size_bytes": 755,
+      "sha256": "787a81995514fe49b8ffe95c05ec0690970eff1340d5d318e83434575ad1e38e"
+    },
+    {
+      "path": "research_records/colab_restart_2026-10-21/reports/preparation_report.json",
+      "size_bytes": 39372,
+      "sha256": "338f575e6c0473f8a14f3c642ad9f5a22f62f27d1cf14b1656ab8ff5c34e32ec"
+    }
+  ],
+  "manifest_excludes_itself": true,
+  "raw_dataset_images_masks_in_git": false
+}

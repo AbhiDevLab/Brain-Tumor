@@ -1,0 +1,689 @@
+{
+  "dataset_root": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025",
+  "classification": {
+    "root": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task",
+    "class_counts": {
+      "train": {
+        "glioma": 1147,
+        "meningioma": 1329,
+        "no_tumor": 1067,
+        "pituitary": 1457
+      },
+      "test": {
+        "glioma": 254,
+        "meningioma": 306,
+        "no_tumor": 140,
+        "pituitary": 300
+      }
+    },
+    "class_sets_match": true,
+    "unexpected_classes": [],
+    "missing_expected_classes": [],
+    "cross_split_exact_duplicates": {
+      "exact_duplicate_groups": 7,
+      "examples": [
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/meningioma/brisc2025_train_01210_me_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/meningioma/brisc2025_test_00344_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/meningioma/brisc2025_train_01304_me_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/meningioma/brisc2025_test_00352_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_03705_pi_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/pituitary/brisc2025_test_00737_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_03749_pi_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/pituitary/brisc2025_test_00751_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_04176_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_04177_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_04178_pi_co_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/pituitary/brisc2025_test_00825_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_04194_pi_co_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/pituitary/brisc2025_test_00827_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/train/pituitary/brisc2025_train_04218_pi_co_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/classification_task/test/pituitary/brisc2025_test_00834_pi_co_t1.jpg"
+            }
+          ]
+        }
+      ],
+      "note": "Byte-identical files only; this does not detect near-duplicates or prove patient-level isolation."
+    }
+  },
+  "segmentation": {
+    "root": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task",
+    "splits": {
+      "train": {
+        "images": 3933,
+        "masks": 3933,
+        "paired_by_filename_stem": 3933,
+        "images_missing_masks": [],
+        "image_missing_mask_count": 0,
+        "masks_without_images": [],
+        "orphan_mask_count": 0
+      },
+      "test": {
+        "images": 860,
+        "masks": 860,
+        "paired_by_filename_stem": 860,
+        "images_missing_masks": [],
+        "image_missing_mask_count": 0,
+        "masks_without_images": [],
+        "orphan_mask_count": 0
+      }
+    },
+    "mask_pixel_audit": {
+      "train": {
+        "sampled_masks": 60,
+        "sampled_pixels": 15514860,
+        "intensity_bins": {
+          "pixels_0_to_7": 15235989,
+          "pixels_8_to_127": 1,
+          "pixels_128_to_247": 3,
+          "pixels_248_to_255": 278867
+        },
+        "sampled_unique_values_first_32_per_mask_union": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          246,
+          247,
+          248,
+          249,
+          250,
+          251,
+          252,
+          253,
+          254,
+          255
+        ],
+        "fraction_foreground_using_threshold_128": {
+          "mean": 0.01868726750170528,
+          "min": 0.001438140869140625,
+          "max": 0.07042428252419154
+        },
+        "image_mask_size_mismatch_count_in_sample": 0,
+        "image_mask_size_mismatch_examples": [],
+        "threshold_note": "Threshold 128 treats 0\u20137 as background and 248\u2013255 as foreground in the inspected sample; review the intensity bins before finalizing this choice."
+      },
+      "test": {
+        "sampled_masks": 60,
+        "sampled_pixels": 14645969,
+        "intensity_bins": {
+          "pixels_0_to_7": 14375104,
+          "pixels_8_to_127": 3,
+          "pixels_128_to_247": 0,
+          "pixels_248_to_255": 270862
+        },
+        "sampled_unique_values_first_32_per_mask_union": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          248,
+          249,
+          250,
+          251,
+          252,
+          253,
+          254,
+          255
+        ],
+        "fraction_foreground_using_threshold_128": {
+          "mean": 0.018870360653959882,
+          "min": 0.00095367431640625,
+          "max": 0.08197402954101562
+        },
+        "image_mask_size_mismatch_count_in_sample": 0,
+        "image_mask_size_mismatch_examples": [],
+        "threshold_note": "Threshold 128 treats 0\u20137 as background and 248\u2013255 as foreground in the inspected sample; review the intensity bins before finalizing this choice."
+      }
+    },
+    "cross_split_exact_duplicates": {
+      "exact_duplicate_groups": 7,
+      "examples": [
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_01210_me_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00344_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_01304_me_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00352_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_03705_pi_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00737_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_03749_pi_ax_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00751_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_04176_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_04177_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_04178_pi_co_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00825_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_04194_pi_co_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00827_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "train",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/train/images/brisc2025_train_04218_pi_co_t1.jpg"
+            },
+            {
+              "split": "test",
+              "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/segmentation_task/test/images/brisc2025_test_00834_pi_co_t1.jpg"
+            }
+          ]
+        }
+      ],
+      "note": "Byte-identical files only; this does not detect near-duplicates or prove patient-level isolation."
+    },
+    "pairing_check_pass": true
+  },
+  "manifest": {
+    "available": true,
+    "path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025/manifest.csv",
+    "row_count": 15586,
+    "columns": [
+      "relative_path",
+      "filename",
+      "task",
+      "split",
+      "index",
+      "tumor_code",
+      "tumor_label",
+      "plane_code",
+      "plane_label",
+      "sequence",
+      "is_mask",
+      "linked_image",
+      "width",
+      "height",
+      "file_size_bytes",
+      "sha256"
+    ],
+    "patient_or_subject_id_column": null,
+    "patient_level_isolation": "Cannot be confirmed from manifest.csv because no explicit patient/subject/study ID column was found.",
+    "file_path_validation": {
+      "rows_with_relative_path": 15586,
+      "files_found_and_hashed": 15586,
+      "missing_or_unresolved_files": 0,
+      "missing_file_examples": []
+    },
+    "sha256_validation": {
+      "rows_with_comparable_hashes": 15586,
+      "files_with_hash_mismatches": 0,
+      "mismatch_examples": [],
+      "note": "Compares each manifest SHA-256 against the file resolved from relative_path."
+    },
+    "manifest_image_hashes_crossing_train_test": {
+      "duplicate_hash_groups": 14,
+      "examples": [
+        {
+          "task": "classification",
+          "sha256": "960155b05ea8f0ddcbcd3a5e29905c2a4b55832f03e5b7d6491c73955960d278",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\meningioma\\brisc2025_test_00344_me_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\meningioma\\brisc2025_train_01210_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "classification",
+          "sha256": "f3d00bbb942117c2fb62466414d3c466ca283b678200fe87424e4128b80b2dba",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\meningioma\\brisc2025_test_00352_me_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\meningioma\\brisc2025_train_01304_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "classification",
+          "sha256": "39f4f7b252d7809d8d3d2e4521607de2195bf0f66c0592587b1cebd632aac640",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\pituitary\\brisc2025_test_00737_pi_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_03705_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "classification",
+          "sha256": "08690b76457b2b44d58682cece62ec951ef6d30d935ce07df852e97d44434680",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\pituitary\\brisc2025_test_00751_pi_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_03749_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "classification",
+          "sha256": "3e802dd22f483ce4d442fe2c7f1890c1c810ec8c1131b364fd4e4593bf0f268a",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\pituitary\\brisc2025_test_00825_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_04176_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_04177_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_04178_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "classification",
+          "sha256": "02799f7863d49de182357e72179f3cc4e65e70099355f2d5aa2e39d356e492d9",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\pituitary\\brisc2025_test_00827_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_04194_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "classification",
+          "sha256": "b5e17076d1427e41a618f92bc72100c1be4df26608223512aac51c911ac1eb88",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "classification_task\\test\\pituitary\\brisc2025_test_00834_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "classification_task\\train\\pituitary\\brisc2025_train_04218_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "960155b05ea8f0ddcbcd3a5e29905c2a4b55832f03e5b7d6491c73955960d278",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00344_me_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_01210_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "f3d00bbb942117c2fb62466414d3c466ca283b678200fe87424e4128b80b2dba",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00352_me_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_01304_me_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "39f4f7b252d7809d8d3d2e4521607de2195bf0f66c0592587b1cebd632aac640",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00737_pi_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_03705_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "08690b76457b2b44d58682cece62ec951ef6d30d935ce07df852e97d44434680",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00751_pi_ax_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_03749_pi_ax_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "3e802dd22f483ce4d442fe2c7f1890c1c810ec8c1131b364fd4e4593bf0f268a",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00825_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_04176_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_04177_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_04178_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "02799f7863d49de182357e72179f3cc4e65e70099355f2d5aa2e39d356e492d9",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00827_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_04194_pi_co_t1.jpg"
+            }
+          ]
+        },
+        {
+          "task": "segmentation",
+          "sha256": "b5e17076d1427e41a618f92bc72100c1be4df26608223512aac51c911ac1eb88",
+          "splits": [
+            "test",
+            "train"
+          ],
+          "files": [
+            {
+              "split": "test",
+              "relative_path": "segmentation_task\\test\\images\\brisc2025_test_00834_pi_co_t1.jpg"
+            },
+            {
+              "split": "train",
+              "relative_path": "segmentation_task\\train\\images\\brisc2025_train_04218_pi_co_t1.jpg"
+            }
+          ]
+        }
+      ],
+      "note": "Groups manifest SHA-256 values by task and checks whether image hashes occur in both train and test. This is an additional check independent of the file-hash scan."
+    }
+  },
+  "scope_warning": "Exact file hashes do not find near-duplicates. No patient-level separation should be claimed unless patient identifiers or source-level provenance establish it."
+}

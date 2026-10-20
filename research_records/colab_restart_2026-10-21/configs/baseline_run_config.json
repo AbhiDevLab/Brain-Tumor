@@ -1,0 +1,53 @@
+{
+  "created_utc": "2026-10-20T19:11:59.337455+00:00",
+  "repository_base_commit": "17d13d5bf3f5db0d4d66389dfbe763d05d43d6ce",
+  "dataset": "BRISC 2025",
+  "seed": 42,
+  "classification": {
+    "model": "EfficientNet-B0",
+    "pretrained": true,
+    "image_size": 224,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "max_epochs": 15,
+    "early_stopping_patience": 5,
+    "validation_only_checkpoint_selection": true
+  },
+  "segmentation_bce": {
+    "model": "U-Net",
+    "image_size": 256,
+    "batch_size": 4,
+    "learning_rate": 0.001,
+    "max_epochs": 30,
+    "early_stopping_patience": 6,
+    "loss": "BCE",
+    "validation_only_checkpoint_selection": true
+  },
+  "segmentation_bce_dice": {
+    "model": "U-Net",
+    "image_size": 256,
+    "batch_size": 4,
+    "learning_rate": 0.001,
+    "max_epochs": 30,
+    "early_stopping_patience": 6,
+    "loss": "BCE + Dice",
+    "status": "planned; not yet run to completion"
+  },
+  "prepared_counts": {
+    "classification": {
+      "train": 4210,
+      "val": 745,
+      "official_test": 1000
+    },
+    "segmentation": {
+      "train": 3301,
+      "val": 584,
+      "official_test": 860
+    },
+    "clean_segmentation_evaluation_pairs": 854
+  },
+  "test_protocol": "Keep clean segmentation evaluation set fixed; do not tune against it.",
+  "patient_level_isolation_confirmed": false,
+  "historical_results_are_not_new_results": true,
+  "checkpoint_policy": "Save latest and best-validation checkpoints, optimizer state, training history and configuration directly to Google Drive. Mirror checkpoint binaries to GitHub LFS or a versioned Release and verify remote SHA-256 before declaring a backup complete."
+}

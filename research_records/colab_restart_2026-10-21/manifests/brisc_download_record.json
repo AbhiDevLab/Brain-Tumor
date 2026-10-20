@@ -1,0 +1,10 @@
+{
+  "dataset": "briscdataset/brisc2025",
+  "retrieved_utc": "2026-10-20T18:53:06.847760+00:00",
+  "archive_path": "/content/drive/MyDrive/BrainTumorResearch/data/raw/brisc2025.zip",
+  "archive_bytes": 262284213,
+  "archive_sha256": "edc2295d0eb6be19aa4ecee74974db0efbb5e088ddcdfde5229e3e2bfb0d010b",
+  "zip_member_count": 15591,
+  "zip_uncompressed_bytes": 276583891,
+  "extracted_dataset_root": "/content/drive/MyDrive/BrainTumorResearch/data/raw/extracted/brisc2025"
+}
