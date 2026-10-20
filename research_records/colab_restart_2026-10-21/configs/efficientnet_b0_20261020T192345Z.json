@@ -1,0 +1,30 @@
+{
+  "run_id": "20261020T192345Z",
+  "status": "configured; training starts after configuration backup",
+  "created_utc": "2026-10-20T19:23:45.616772+00:00",
+  "repository": "AbhiDevLab/Brain-Tumor",
+  "research_branch": "research/colab-baseline-2026-10-21",
+  "training_source_commit": "5466d88791da55c9d0baed5f482ff016cc24a776",
+  "model": "EfficientNet-B0",
+  "pretrained": true,
+  "seed": 42,
+  "image_size": 224,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "max_epochs": 15,
+  "early_stopping_patience": 5,
+  "optimizer": "AdamW",
+  "checkpoint_selection": "Minimum validation loss",
+  "data_dir_runtime": "/content/BrainTumorWorking/classification",
+  "data_dir_persistent_source": "/content/drive/MyDrive/BrainTumorResearch/data/processed_brisc/classification",
+  "best_checkpoint_drive": "/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt",
+  "latest_recovery_checkpoint_drive": "/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.latest.pt",
+  "history_drive": "/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.history.json",
+  "training_log_drive": "/content/drive/MyDrive/BrainTumorResearch/logs/efficientnet_b0_20261020T192345Z.log",
+  "official_test_use": "Final evaluation only, not model selection",
+  "classification_counts": {
+    "train": 4210,
+    "val": 745,
+    "test": 1000
+  }
+}
