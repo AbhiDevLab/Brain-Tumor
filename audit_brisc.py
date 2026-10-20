@@ -214,6 +214,12 @@ def audit_manifest(root: Path) -> dict:
     lowered = {field.lower(): field for field in fields}
     id_candidates = ("patient_id", "patient", "subject_id", "subject", "study_id", "case_id")
     id_column = next((lowered[key] for key in id_candidates if key in lowered), None)
+    relative_column = lowered.get("relative_path")
+    hash_column = lowered.get("sha256")
+    task_column = lowered.get("task")
+    split_column = lowered.get("split")
+    mask_column = lowered.get("is_mask")
+
     result = {
         "available": True,
         "path": str(path),
@@ -224,7 +230,6 @@ def audit_manifest(root: Path) -> dict:
 
     if id_column:
         id_splits: dict[str, set[str]] = defaultdict(set)
-        split_column = lowered.get("split")
         if split_column:
             for row in rows:
                 identifier = (row.get(id_column) or "").strip()
@@ -242,8 +247,85 @@ def audit_manifest(root: Path) -> dict:
         result["patient_level_isolation"] = (
             "Cannot be confirmed from manifest.csv because no explicit patient/subject/study ID column was found."
         )
-    return result
 
+    if relative_column:
+        missing_files = []
+        checked_files = 0
+        checksum_mismatches = []
+        manifest_image_hashes: dict[tuple[str, str], list[dict[str, str]]] = defaultdict(list)
+        for row_number, row in enumerate(rows, start=2):
+            raw_relative = (row.get(relative_column) or "").strip()
+            if not raw_relative:
+                missing_files.append({"row": row_number, "relative_path": ""})
+                continue
+
+            relative = Path(raw_relative)
+            candidates = (
+                [relative] if relative.is_absolute()
+                else [root / relative, root.parent / relative]
+            )
+            resolved = next((candidate for candidate in candidates if candidate.is_file()), None)
+            if resolved is None:
+                missing_files.append({"row": row_number, "relative_path": raw_relative})
+                continue
+
+            checked_files += 1
+            actual_hash = sha256(resolved)
+            expected_hash = (row.get(hash_column) or "").strip().lower() if hash_column else ""
+            if expected_hash and actual_hash.lower() != expected_hash:
+                checksum_mismatches.append({
+                    "row": row_number,
+                    "relative_path": raw_relative,
+                    "manifest_sha256": expected_hash,
+                    "actual_sha256": actual_hash,
+                })
+
+            # Compare image rows only (not masks), grouping inside each task.
+            is_mask = (row.get(mask_column) or "").strip().lower() if mask_column else ""
+            if hash_column and task_column and split_column and is_mask not in {"true", "1", "yes"}:
+                task = (row.get(task_column) or "").strip()
+                split = (row.get(split_column) or "").strip().lower()
+                if task and split in {"train", "test"}:
+                    manifest_hash = expected_hash or actual_hash.lower()
+                    manifest_image_hashes[(task, manifest_hash)].append({
+                        "split": split,
+                        "relative_path": raw_relative,
+                    })
+
+        duplicate_groups = []
+        for (task, digest), entries in manifest_image_hashes.items():
+            split_names = sorted({entry["split"] for entry in entries})
+            if len(split_names) > 1:
+                duplicate_groups.append({
+                    "task": task,
+                    "sha256": digest,
+                    "splits": split_names,
+                    "files": entries,
+                })
+
+        result["file_path_validation"] = {
+            "rows_with_relative_path": len(rows),
+            "files_found_and_hashed": checked_files,
+            "missing_or_unresolved_files": len(missing_files),
+            "missing_file_examples": missing_files[:20],
+        }
+        if hash_column:
+            result["sha256_validation"] = {
+                "rows_with_comparable_hashes": sum(
+                    1 for row in rows if (row.get(hash_column) or "").strip()
+                ),
+                "files_with_hash_mismatches": len(checksum_mismatches),
+                "mismatch_examples": checksum_mismatches[:20],
+                "note": "Compares each manifest SHA-256 against the file resolved from relative_path.",
+            }
+        if manifest_image_hashes:
+            result["manifest_image_hashes_crossing_train_test"] = {
+                "duplicate_hash_groups": len(duplicate_groups),
+                "examples": duplicate_groups[:20],
+                "note": "Groups manifest SHA-256 values by task and checks whether image hashes occur in both train and test. This is an additional check independent of the file-hash scan.",
+            }
+
+    return result
 
 def main() -> None:
     parser = argparse.ArgumentParser(
