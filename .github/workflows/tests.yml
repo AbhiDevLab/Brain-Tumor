@@ -19,6 +19,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
       - name: Compile Python files
-        run: python -m compileall -q app.py audit_dataset.py audit_brisc.py train_classifier.py train_segmenter.py evaluate_classifier.py evaluate_segmenter.py src tests
+        run: python -m compileall -q app.py audit_dataset.py audit_brisc.py prepare_brisc.py train_classifier.py train_segmenter.py evaluate_classifier.py evaluate_segmenter.py src tests
       - name: Run tests
         run: pytest -q
