@@ -1,0 +1,101 @@
+{
+  "run_id": "20261020T192345Z",
+  "evaluation_type": "one-time official test evaluation",
+  "completed_utc": "2026-10-20T20:01:10.254877+00:00",
+  "selected_validation_epoch": 12,
+  "test_class_counts": {
+    "pituitary": 300,
+    "meningioma": 306,
+    "no_tumor": 140,
+    "glioma": 254
+  },
+  "checkpoint_sha256": "c0775f865d8a4811f10b50818fb44ce62d8b08c1ecb366cf317f8242eb38f9d8",
+  "metrics": {
+    "accuracy": 0.994,
+    "macro_f1": 0.9939447850608422,
+    "weighted_f1": 0.994000496371931,
+    "n_test": 1000,
+    "classes": [
+      "glioma",
+      "meningioma",
+      "no_tumor",
+      "pituitary"
+    ],
+    "classification_report": {
+      "glioma": {
+        "precision": 0.9960629921259843,
+        "recall": 0.9960629921259843,
+        "f1-score": 0.9960629921259843,
+        "support": 254.0
+      },
+      "meningioma": {
+        "precision": 0.9934426229508196,
+        "recall": 0.9901960784313726,
+        "f1-score": 0.9918166939443536,
+        "support": 306.0
+      },
+      "no_tumor": {
+        "precision": 0.9859154929577465,
+        "recall": 1.0,
+        "f1-score": 0.9929078014184397,
+        "support": 140.0
+      },
+      "pituitary": {
+        "precision": 0.9966555183946488,
+        "recall": 0.9933333333333333,
+        "f1-score": 0.994991652754591,
+        "support": 300.0
+      },
+      "accuracy": 0.994,
+      "macro avg": {
+        "precision": 0.9930191566072999,
+        "recall": 0.9948981009726725,
+        "f1-score": 0.9939447850608422,
+        "support": 1000.0
+      },
+      "weighted avg": {
+        "precision": 0.9940182671554301,
+        "recall": 0.994,
+        "f1-score": 0.994000496371931,
+        "support": 1000.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        253,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        303,
+        2,
+        1
+      ],
+      [
+        0,
+        0,
+        140,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        298
+      ]
+    ],
+    "checkpoint": "/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt"
+  },
+  "files": {
+    "metrics_json": "/content/drive/MyDrive/BrainTumorResearch/metrics/classification_official_test_20261020T192345Z/metrics.json",
+    "metrics_sha256": "ff171f5843c86fd44a932c23f2d252398a4cfe6024bb5aa031cb58b3d1bc12d6",
+    "confusion_matrix_csv": "/content/drive/MyDrive/BrainTumorResearch/metrics/classification_official_test_20261020T192345Z/confusion_matrix.csv",
+    "confusion_matrix_sha256": "c841afc474e124d7f33a12f775069f8317edaad40074964cb5f7d7270fe408ea",
+    "evaluation_log": "/content/drive/MyDrive/BrainTumorResearch/logs/classification_test_evaluation_20261020T192345Z.log",
+    "evaluation_log_sha256": "9800c9663b1d8b0fe776bd84c60649286ff63480b4a417be8f0b91fd0946ea7e"
+  },
+  "test_evaluated": true,
+  "test_used_for_model_selection": false
+}

@@ -1,6 +1,6 @@
 {
   "run_id": "20261020T192345Z",
-  "status": "classifier training completed; official test evaluation pending",
+  "status": "classifier test evaluation completed; segmentation baseline pending",
   "created_utc": "2026-10-20T19:23:45.616772+00:00",
   "repository": "AbhiDevLab/Brain-Tumor",
   "research_branch": "research/colab-baseline-2026-10-21",
@@ -51,5 +51,6 @@
   "checkpoint_sha256": {
     "best": "c0775f865d8a4811f10b50818fb44ce62d8b08c1ecb366cf317f8242eb38f9d8",
     "latest": "c3ed4547fde0aef9922b48b7a21b521d23f53b6b490d6fb5e84de145a940db5c"
-  }
+  },
+  "official_test_evaluation": "/content/drive/MyDrive/BrainTumorResearch/metrics/classification_official_test_20261020T192345Z/evaluation_record.json"
 }

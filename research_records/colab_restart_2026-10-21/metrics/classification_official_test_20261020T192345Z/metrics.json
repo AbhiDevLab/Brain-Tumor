@@ -1,0 +1,78 @@
+{
+  "accuracy": 0.994,
+  "macro_f1": 0.9939447850608422,
+  "weighted_f1": 0.994000496371931,
+  "n_test": 1000,
+  "classes": [
+    "glioma",
+    "meningioma",
+    "no_tumor",
+    "pituitary"
+  ],
+  "classification_report": {
+    "glioma": {
+      "precision": 0.9960629921259843,
+      "recall": 0.9960629921259843,
+      "f1-score": 0.9960629921259843,
+      "support": 254.0
+    },
+    "meningioma": {
+      "precision": 0.9934426229508196,
+      "recall": 0.9901960784313726,
+      "f1-score": 0.9918166939443536,
+      "support": 306.0
+    },
+    "no_tumor": {
+      "precision": 0.9859154929577465,
+      "recall": 1.0,
+      "f1-score": 0.9929078014184397,
+      "support": 140.0
+    },
+    "pituitary": {
+      "precision": 0.9966555183946488,
+      "recall": 0.9933333333333333,
+      "f1-score": 0.994991652754591,
+      "support": 300.0
+    },
+    "accuracy": 0.994,
+    "macro avg": {
+      "precision": 0.9930191566072999,
+      "recall": 0.9948981009726725,
+      "f1-score": 0.9939447850608422,
+      "support": 1000.0
+    },
+    "weighted avg": {
+      "precision": 0.9940182671554301,
+      "recall": 0.994,
+      "f1-score": 0.994000496371931,
+      "support": 1000.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      253,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      303,
+      2,
+      1
+    ],
+    [
+      0,
+      0,
+      140,
+      0
+    ],
+    [
+      1,
+      1,
+      0,
+      298
+    ]
+  ],
+  "checkpoint": "/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt"
+}
