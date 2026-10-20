@@ -259,7 +259,11 @@ def audit_manifest(root: Path) -> dict:
                 missing_files.append({"row": row_number, "relative_path": ""})
                 continue
 
-            relative = Path(raw_relative)
+            # The Kaggle manifest stores relative paths with Windows
+            # separators (backslashes), even when audited on Linux/Colab.
+            # Normalize separators before constructing a platform-native Path.
+            normalized_relative = raw_relative.replace("\\\\", "/").replace("\\", "/")
+            relative = Path(normalized_relative)
             candidates = (
                 [relative] if relative.is_absolute()
                 else [root / relative, root.parent / relative]
@@ -286,8 +290,9 @@ def audit_manifest(root: Path) -> dict:
                 task = (row.get(task_column) or "").strip()
                 split = (row.get(split_column) or "").strip().lower()
                 if task and split in {"train", "test"}:
-                    manifest_hash = expected_hash or actual_hash.lower()
-                    manifest_image_hashes[(task, manifest_hash)].append({
+                    # Group by bytes actually present on disk. The manifest
+                    # checksum is separately compared to actual_hash above.
+                    manifest_image_hashes[(task, actual_hash.lower())].append({
                         "split": split,
                         "relative_path": raw_relative,
                     })
