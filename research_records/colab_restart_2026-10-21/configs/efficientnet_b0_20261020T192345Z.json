@@ -1,6 +1,6 @@
 {
   "run_id": "20261020T192345Z",
-  "status": "configured; waiting for classifier training launch",
+  "status": "classifier training completed; official test evaluation pending",
   "created_utc": "2026-10-20T19:23:45.616772+00:00",
   "repository": "AbhiDevLab/Brain-Tumor",
   "research_branch": "research/colab-baseline-2026-10-21",
@@ -27,5 +27,29 @@
     "val": 745,
     "test": 1000
   },
-  "configuration_backup_verified": true
+  "configuration_backup_verified": true,
+  "training_started_utc": "2026-10-20T19:34:31.186538+00:00",
+  "training_parameters": {
+    "architecture": "efficientnet_b0",
+    "pretrained": true,
+    "epochs_requested": 15,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "image_size": 224,
+    "seed": 42,
+    "patience": 5
+  },
+  "training_finished_utc": "2026-10-20T19:46:37.894919+00:00",
+  "completed_epochs": 15,
+  "best_validation_loss": 0.01619772593843932,
+  "best_validation_accuracy": 0.9946308724832215,
+  "latest_checkpoint_epoch": 15,
+  "artifact_report_drive": "/content/drive/MyDrive/BrainTumorResearch/reports/classification_artifacts_20261020T192345Z.json",
+  "checkpoint_backup_status": "checkpoint assets uploaded and SHA-256 verified",
+  "checkpoint_backup_report_drive": "/content/drive/MyDrive/BrainTumorResearch/reports/classification_artifact_backup_20261020T192345Z.json",
+  "checkpoint_release_url": "https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b",
+  "checkpoint_sha256": {
+    "best": "c0775f865d8a4811f10b50818fb44ce62d8b08c1ecb366cf317f8242eb38f9d8",
+    "latest": "c3ed4547fde0aef9922b48b7a21b521d23f53b6b490d6fb5e84de145a940db5c"
+  }
 }
