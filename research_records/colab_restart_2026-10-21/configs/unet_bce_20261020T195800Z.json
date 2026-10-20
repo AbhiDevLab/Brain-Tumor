@@ -1,0 +1,57 @@
+{
+  "run_id": "20261020T195800Z",
+  "experiment": "U-Net segmentation baseline with BCE loss",
+  "status": "segmentation BCE training completed; clean 854-pair evaluation pending",
+  "created_utc": "2026-10-20T20:07:54.710334+00:00",
+  "source_commit": "cae0242d483dedb30717aea97564350d25962318",
+  "data_dir": "/content/BrainTumorWorking/segmentation",
+  "prepared_manifest": "/content/drive/MyDrive/BrainTumorResearch/data/processed_brisc/prepared_manifest.csv",
+  "prepared_manifest_sha256": "2e28181825b3a41a47ed8832f3fee1ddbc405fc4cc184ef3b659b9486f873cca",
+  "clean_evaluation_dir": "/content/drive/MyDrive/BrainTumorResearch/data/segmentation_unique_eval",
+  "verified_counts": {
+    "train": {
+      "images": 3301,
+      "masks": 3301
+    },
+    "val": {
+      "images": 584,
+      "masks": 584
+    },
+    "test": {
+      "images": 860,
+      "masks": 860
+    }
+  },
+  "parameters": {
+    "architecture": "unet_binary",
+    "loss_mode": "bce",
+    "epochs": 30,
+    "batch_size": 4,
+    "learning_rate": 0.001,
+    "image_size": 256,
+    "seed": 42,
+    "patience": 6,
+    "weight_decay": 0.0001
+  },
+  "best_checkpoint_drive": "/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.pt",
+  "latest_recovery_checkpoint_drive": "/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.latest.pt",
+  "history_drive": "/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.history.json",
+  "training_log_drive": "/content/drive/MyDrive/BrainTumorResearch/logs/unet_bce_20261020T195800Z.log",
+  "clean_evaluation_pairs": 854,
+  "official_test_used_for_training": false,
+  "training_started_utc": "2026-10-20T20:07:54.750500+00:00",
+  "last_launch_utc": "2026-10-20T20:07:54.750575+00:00",
+  "completed_utc": "2026-10-20T20:55:23.211294+00:00",
+  "epochs_completed": 21,
+  "best_validation_loss": 0.01570224752872927,
+  "artifact_report_drive": "/content/drive/MyDrive/BrainTumorResearch/reports/segmentation_artifacts_20261020T195800Z.json",
+  "best_checkpoint_sha256": "7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357",
+  "latest_checkpoint_sha256": "30257a67440f97a50015dc19b21725d0c90ab9177598faa76e882a18480e5c45",
+  "checkpoint_backup_status": "checkpoint assets uploaded and SHA-256 verified",
+  "checkpoint_backup_report_drive": "/content/drive/MyDrive/BrainTumorResearch/reports/segmentation_backup_verification_20261020T195800Z.json",
+  "checkpoint_release_url": "https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b",
+  "checkpoint_sha256": {
+    "best": "7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357",
+    "latest": "30257a67440f97a50015dc19b21725d0c90ab9177598faa76e882a18480e5c45"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "run_id": "20261020T195800Z",
+  "created_utc": "2026-10-20T20:56:53.925313+00:00",
+  "status": "checkpoint assets uploaded and SHA-256 verified",
+  "release_tag": "baseline-checkpoints-2026-10-21",
+  "release_url": "https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b",
+  "release_is_draft": true,
+  "best_validation_loss_epoch": 15,
+  "epochs_completed": 21,
+  "latest_recovery_epoch": 21,
+  "assets": [
+    {
+      "name": "unet_bce_best_20261020T195800Z.pt",
+      "size_bytes": 7754627,
+      "sha256": "7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357",
+      "release_asset_id": 660464605,
+      "browser_download_url": "https://github.com/AbhiDevLab/Brain-Tumor/releases/download/untagged-43fd0c2fb84e8d525a8b/unet_bce_best_20261020T195800Z.pt"
+    },
+    {
+      "name": "unet_bce_best_20261020T195800Z.latest.pt",
+      "size_bytes": 23232977,
+      "sha256": "30257a67440f97a50015dc19b21725d0c90ab9177598faa76e882a18480e5c45",
+      "release_asset_id": 660464706,
+      "browser_download_url": "https://github.com/AbhiDevLab/Brain-Tumor/releases/download/untagged-43fd0c2fb84e8d525a8b/unet_bce_best_20261020T195800Z.latest.pt"
+    }
+  ],
+  "history_sha256": "d0a8277f53131a1606946102e4739c67bf1196dcb23e9198502c38b44dea65d6",
+  "training_log_sha256": "44d132d4571fda62a1691c140d36a04018f68157229841102e733af40d69f6c6",
+  "official_test_evaluated": false,
+  "clean_evaluation_pairs": 854
+}

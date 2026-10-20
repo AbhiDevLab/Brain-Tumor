@@ -1,0 +1,170 @@
+[
+  {
+    "epoch": 1,
+    "train_loss": 0.09341503335862053,
+    "val_loss": 0.05056270726076136,
+    "val_dice_all_images": 0.19576273282064108,
+    "val_iou_all_images": 0.14606393532037662,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 2,
+    "train_loss": 0.03856024299534015,
+    "val_loss": 0.03238961578040601,
+    "val_dice_all_images": 0.4826219420828688,
+    "val_iou_all_images": 0.4062419191607093,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 3,
+    "train_loss": 0.030968731489668423,
+    "val_loss": 0.030593608518781727,
+    "val_dice_all_images": 0.6232458653233222,
+    "val_iou_all_images": 0.5314371709373154,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 4,
+    "train_loss": 0.02694503075305652,
+    "val_loss": 0.028839086731002755,
+    "val_dice_all_images": 0.606508160767318,
+    "val_iou_all_images": 0.5208618493967077,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 5,
+    "train_loss": 0.023637089349518893,
+    "val_loss": 0.02457078830147647,
+    "val_dice_all_images": 0.5911912591095667,
+    "val_iou_all_images": 0.5186681012241392,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 6,
+    "train_loss": 0.021884080535026388,
+    "val_loss": 0.02363523662772846,
+    "val_dice_all_images": 0.6665366952721787,
+    "val_iou_all_images": 0.5821236193749612,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 7,
+    "train_loss": 0.01943994346768178,
+    "val_loss": 0.020058932886395143,
+    "val_dice_all_images": 0.7354239243808174,
+    "val_iou_all_images": 0.6517861926658821,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 8,
+    "train_loss": 0.018188419937861963,
+    "val_loss": 0.025201345513230316,
+    "val_dice_all_images": 0.7128174065927217,
+    "val_iou_all_images": 0.6151876871658193,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 9,
+    "train_loss": 0.0165515133274435,
+    "val_loss": 0.02126163341047574,
+    "val_dice_all_images": 0.7086865177701528,
+    "val_iou_all_images": 0.6255994260052333,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 10,
+    "train_loss": 0.015205306139691184,
+    "val_loss": 0.02019972750942593,
+    "val_dice_all_images": 0.739427431299392,
+    "val_iou_all_images": 0.6573887859146249,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 11,
+    "train_loss": 0.014556181588893435,
+    "val_loss": 0.017054563947978798,
+    "val_dice_all_images": 0.7677770774472956,
+    "val_iou_all_images": 0.687713944818057,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 12,
+    "train_loss": 0.013061389227828448,
+    "val_loss": 0.016534918849037527,
+    "val_dice_all_images": 0.7633902721063847,
+    "val_iou_all_images": 0.6841990783889073,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 13,
+    "train_loss": 0.012406210678902435,
+    "val_loss": 0.016561889650989068,
+    "val_dice_all_images": 0.7411161439379175,
+    "val_iou_all_images": 0.6658009537367617,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 14,
+    "train_loss": 0.011270528023591216,
+    "val_loss": 0.018425615660667624,
+    "val_dice_all_images": 0.7851431361142807,
+    "val_iou_all_images": 0.6956806552125718,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 15,
+    "train_loss": 0.010812212603694374,
+    "val_loss": 0.01570224752872927,
+    "val_dice_all_images": 0.7969094987888681,
+    "val_iou_all_images": 0.7148603699675647,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 16,
+    "train_loss": 0.010068272319103684,
+    "val_loss": 0.018467565011296882,
+    "val_dice_all_images": 0.7698077153889381,
+    "val_iou_all_images": 0.6926014611504554,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 17,
+    "train_loss": 0.009829651061490575,
+    "val_loss": 0.015992073504069233,
+    "val_dice_all_images": 0.7864834873642433,
+    "val_iou_all_images": 0.7045273601250828,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 18,
+    "train_loss": 0.008252266548505192,
+    "val_loss": 0.020137685251403088,
+    "val_dice_all_images": 0.764397622518771,
+    "val_iou_all_images": 0.68942787339138,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 19,
+    "train_loss": 0.007726843188517923,
+    "val_loss": 0.018256196777706277,
+    "val_dice_all_images": 0.7834929066495839,
+    "val_iou_all_images": 0.702497136098276,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 20,
+    "train_loss": 0.007593713440457652,
+    "val_loss": 0.01661253866918181,
+    "val_dice_all_images": 0.7999907580407091,
+    "val_iou_all_images": 0.7227429986443719,
+    "loss_mode": "bce"
+  },
+  {
+    "epoch": 21,
+    "train_loss": 0.0071644343536676385,
+    "val_loss": 0.016520072063367353,
+    "val_dice_all_images": 0.8004443094527739,
+    "val_iou_all_images": 0.7208046125657234,
+    "loss_mode": "bce"
+  }
+]

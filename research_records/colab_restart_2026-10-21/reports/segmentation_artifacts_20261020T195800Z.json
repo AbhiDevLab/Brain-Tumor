@@ -1,0 +1,57 @@
+{
+  "run_id": "20261020T195800Z",
+  "created_utc": "2026-10-20T20:55:22.971799+00:00",
+  "status": "training completed; clean 854-pair evaluation pending",
+  "training_exit_code": 0,
+  "parameters": {
+    "architecture": "unet_binary",
+    "loss_mode": "bce",
+    "epochs": 30,
+    "batch_size": 4,
+    "learning_rate": 0.001,
+    "image_size": 256,
+    "seed": 42,
+    "patience": 6,
+    "weight_decay": 0.0001
+  },
+  "verified_counts": {
+    "train": {
+      "images": 3301,
+      "masks": 3301
+    },
+    "val": {
+      "images": 584,
+      "masks": 584
+    },
+    "test": {
+      "images": 860,
+      "masks": 860
+    }
+  },
+  "epochs_completed": 21,
+  "best_checkpoint": {
+    "path": "/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.pt",
+    "size_bytes": 7754627,
+    "sha256": "7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357",
+    "best_validation_loss": 0.01570224752872927,
+    "best_validation_dice": 0.7969094987888681,
+    "best_validation_iou": 0.7148603699675647
+  },
+  "latest_recovery_checkpoint": {
+    "path": "/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.latest.pt",
+    "size_bytes": 23232977,
+    "sha256": "30257a67440f97a50015dc19b21725d0c90ab9177598faa76e882a18480e5c45",
+    "epoch": 21
+  },
+  "history": {
+    "path": "/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.history.json",
+    "sha256": "d0a8277f53131a1606946102e4739c67bf1196dcb23e9198502c38b44dea65d6"
+  },
+  "training_log": {
+    "path": "/content/drive/MyDrive/BrainTumorResearch/logs/unet_bce_20261020T195800Z.log",
+    "sha256": "44d132d4571fda62a1691c140d36a04018f68157229841102e733af40d69f6c6"
+  },
+  "clean_evaluation_path": "/content/drive/MyDrive/BrainTumorResearch/data/segmentation_unique_eval",
+  "clean_evaluation_pairs": 854,
+  "official_test_evaluated": false
+}
