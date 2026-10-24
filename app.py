@@ -78,7 +78,7 @@ _SECRET_KEYS = (
     "BRAIN_MRI_CLASSIFIER_TOKEN", "BRAIN_MRI_CLASSIFIER_SHA256",
     "BRAIN_MRI_SEGMENTER_CHECKPOINT", "BRAIN_MRI_SEGMENTER_URL",
     "BRAIN_MRI_SEGMENTER_TOKEN", "BRAIN_MRI_SEGMENTER_SHA256",
-    "BRAIN_MRI_MODEL_CACHE_DIR",
+    "BRAIN_MRI_MODEL_CACHE_DIR", "BRAIN_MRI_GITHUB_TOKEN",
 )
 for _secret_key in _SECRET_KEYS:
     if not os.environ.get(_secret_key):
@@ -97,6 +97,7 @@ checkpoint_status_labels = {
     "local_missing": "Configured local checkpoint unavailable",
     "private_configured": "Private artifact configured; retrieval starts when analysis runs",
     "private_incomplete": "Private artifact settings incomplete or invalid",
+    "github_configured": "Private GitHub Release configured; retrieval starts when analysis runs",
     "unavailable": "Checkpoint unavailable",
 }
 classifier_source_status = checkpoint_source_status("classifier")
