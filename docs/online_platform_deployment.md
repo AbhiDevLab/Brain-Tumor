@@ -52,7 +52,7 @@ Do not put these files in the Git repository. A Colab `/content/drive/...` path 
 
 ### Option B — private HTTPS artifact endpoint
 
-For a hosted server without Drive access, the application can retrieve each checkpoint from a private HTTPS download endpoint. The endpoint must return the raw model file to a server-side GET request authenticated by a separate, narrowly scoped **read-only Bearer token**. The URL must not contain credentials or query parameters. Configure all six values in the host's secret manager:
+For a hosted server without Drive access, the application can retrieve each checkpoint from a private HTTPS download endpoint. The endpoint must return the raw model file to a server-side GET request authenticated by a separate, narrowly scoped **read-only Bearer token**. The URL must not contain credentials or query parameters, and the endpoint must return the model bytes directly without redirecting. Configure all six values in the host's secret manager:
 
 ```toml
 BRAIN_MRI_CLASSIFIER_URL = "https://artifacts.example.org/brain-tumor/classifier.pt"
@@ -118,3 +118,16 @@ streamlit run app.py
 ```
 
 The inference unit tests use small controlled model doubles for software-contract checks; those tests are not medical-image performance results. Final acceptance still requires the actual saved classifier checkpoint and the actual BCE U-Net checkpoint to load and produce outputs in the intended hosted runtime. Until that real-artifact check and live smoke test happen, the deployment is not considered verified.
+
+
+## Hosting alternatives considered
+
+| Host | Advantages for this repository | Trade-offs / when to choose it |
+|---|---|---|
+| **Streamlit Community Cloud (first candidate)** | Existing Streamlit UI can deploy directly from the private GitHub repo; app secrets and explicit viewer-sharing controls are built in. | Resource quotas can be restrictive for PyTorch and two models. Choose it only after measuring cold-start RAM, latency and actual checkpoint loading. The app may be private by default, so configure viewer access deliberately. |
+| **Hugging Face Spaces (Docker/Gradio)** | Official Spaces documentation describes a 16 GB RAM / 2 CPU default hardware profile and private Spaces; GPU upgrades and mounted model/storage volumes are available on supported plans. | A first-class Gradio UI would require a frontend adaptation, or Docker packaging for Streamlit. Hardware and storage features/pricing depend on current plan. Space-local disk is ephemeral unless a supported volume is attached. |
+| **Render web service** | Can run Streamlit/Python from a private Git provider connection, has managed HTTPS, environment variables/secrets, and a paid persistent disk option. This is a good alternative if hosting needs more explicit service/resource control. | A suitable always-on service and persistent disk may incur cost. Persistent disks have service/scaling constraints; model artifacts must still be stored and access-controlled separately. |
+
+References: [Streamlit Community Cloud status and limits](https://docs.streamlit.io/deploy/streamlit-community-cloud/status), [Streamlit sharing](https://docs.streamlit.io/deploy/streamlit-community-cloud/share-your-app), [Hugging Face Spaces overview](https://huggingface.co/docs/hub/spaces-overview), [Spaces storage](https://huggingface.co/docs/hub/main/spaces-storage), [Render web services](https://render.com/docs/web-services), and [Render persistent disks](https://render.com/docs/disks).
+
+**Selection:** Start with Streamlit Community Cloud because it matches the existing app and avoids a rewrite, but treat it as conditional rather than guaranteed. If checkpoint loading, memory or cold-start behaviour exceeds its current limits, move the same inference module to a host with a documented RAM budget such as a suitably configured Render service or a Docker-based Spaces deployment. In either case, private model artifacts must not be placed in ordinary Git history or exposed through public URLs.
