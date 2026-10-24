@@ -267,3 +267,30 @@ def test_private_artifact_checksum_mismatch_fails_closed(tmp_path, monkeypatch):
             "read-only-token",
             hashlib.sha256(b"different bytes").hexdigest(),
         )
+
+
+
+def test_checkpoint_source_status_does_not_trigger_download_or_expose_secrets(tmp_path, monkeypatch):
+    for name in (
+        "BRAIN_MRI_CLASSIFIER_CHECKPOINT", "BRAIN_MRI_CLASSIFIER_URL",
+        "BRAIN_MRI_CLASSIFIER_TOKEN", "BRAIN_MRI_CLASSIFIER_SHA256",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(inference, "DEFAULT_CLASSIFIER_PATH", tmp_path / "not-installed.pt")
+    assert inference.checkpoint_source_status("classifier") == "unavailable"
+
+    local = tmp_path / "classifier.pt"
+    monkeypatch.setenv("BRAIN_MRI_CLASSIFIER_CHECKPOINT", str(local))
+    assert inference.checkpoint_source_status("classifier") == "local_missing"
+    local.write_bytes(b"private")
+    assert inference.checkpoint_source_status("classifier") == "local_available"
+
+    monkeypatch.delenv("BRAIN_MRI_CLASSIFIER_CHECKPOINT")
+    monkeypatch.setenv("BRAIN_MRI_CLASSIFIER_URL", "https://artifacts.example.org/models/classifier.pt")
+    monkeypatch.setenv("BRAIN_MRI_CLASSIFIER_TOKEN", "do-not-display-this")
+    monkeypatch.setenv("BRAIN_MRI_CLASSIFIER_SHA256", "a" * 64)
+    assert inference.checkpoint_source_status("classifier") == "private_configured"
+    assert "do-not-display-this" not in inference.checkpoint_source_status("classifier")
+
+    monkeypatch.delenv("BRAIN_MRI_CLASSIFIER_TOKEN")
+    assert inference.checkpoint_source_status("classifier") == "private_incomplete"
