@@ -9,7 +9,7 @@ import warnings
 from functools import lru_cache
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -80,9 +80,14 @@ def _download_private_artifact(kind: str, url: str, token: str, expected_sha256:
             headers={"Authorization": f"Bearer {token}", "User-Agent": "BrainTumorMRIResearch/1.0"},
             method="GET",
         )
+        class _RejectRedirects(HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+        opener = build_opener(_RejectRedirects)
         temp_path: Path | None = None
         try:
-            with urlopen(request, timeout=90) as response:
+            # Never forward the Bearer credential through an HTTP redirect.
+            with opener.open(request, timeout=90) as response:
                 final_url = urlparse(response.geturl())
                 if final_url.scheme != "https" or final_url.username or final_url.password or final_url.query:
                     raise CheckpointError("The private artifact endpoint redirected to an unsafe URL.")
