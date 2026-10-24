@@ -6,15 +6,18 @@ Research prototype for four-class classification of 2D brain MRI images and bina
 
 ## Current status — 24 October 2026
 
-The research experiments are complete according to the run results supplied by the researcher, and this branch adds an inference pipeline and online-platform UI. The actual model files remain excluded from ordinary Git history and are available in the private draft GitHub Release. Its asset IDs, sizes and SHA-256 metadata have now been inspected and match the supplied hashes. The application has a pinned GitHub Release downloader with manual redirect validation and SHA-256 checks, and a GitHub Actions smoke-test job for loading the actual weights. The first attempt using the built-in workflow token received HTTP 403 on the private draft release, so the runner now requires the read-only `BRAIN_MRI_GITHUB_TOKEN` repository secret. That secret has not been configured in this repository's Actions settings in this session. Live hosting and an end-to-end run on an approved de-identified MRI remain separate acceptance gates.
+The research experiments are complete according to the run results supplied by the researcher, and this branch adds an inference pipeline and online-platform UI. The actual model files remain excluded from ordinary Git history and are attached to the repository's published pre-release. The pinned asset IDs, sizes and SHA-256 metadata have been verified. GitHub Actions successfully downloaded all three best checkpoints using the repository's read-only `BRAIN_MRI_GITHUB_TOKEN` secret, verified their SHA-256 hashes, loaded the actual trained weights, and passed a synthetic software-contract inference test on commit `51322230fc261572f1e328d0d67d6c0cd84d085e`. This smoke test is not an MRI performance test. Live hosting and end-to-end testing on an approved de-identified MRI remain separate acceptance gates.
 
 - [x] Existing EfficientNet-B0 and U-Net architecture/preprocessing inspected.
 - [x] Feature branch `feature/online-mri-research-platform` created from `research/colab-baseline-2026-10-21`.
 - [x] Checkpoint path configuration, strict architecture/state-dictionary loading, private HTTPS and pinned GitHub Release retrieval with SHA-256 verification added.
 - [x] Image validation, in-memory inference functions, model-score reporting, mask/overlay alignment, preliminary consistency rules, JSON report construction, and unit tests added.
 - [x] Streamlit interface updated with de-identified upload guidance, result dashboard, Grad-CAM distinction, error handling, and research warnings.
-- [x] GitHub Actions unit-test suite passed on the updated CPU-only inference dependency setup (latest full run is checking the newest commits).
-- [ ] Add the repository Actions secret `BRAIN_MRI_GITHUB_TOKEN` (fine-grained PAT limited to this repo with Contents: Read-only, for an account that can access the draft release); then load the real checkpoints and run the real-checkpoint smoke test.
+- [x] GitHub Actions unit-test suite passed on the updated CPU-only inference dependency setup.
+- [x] Published the checkpoint pre-release and configured the repository Actions secret `BRAIN_MRI_GITHUB_TOKEN` with repository-scoped Contents: Read-only permission.
+- [x] Real-checkpoint smoke test passed: downloaded classifier and both U-Net best checkpoints, verified SHA-256, loaded the actual trained weights, and validated software inference outputs on a synthetic pattern.
+- [ ] Deploy the app, configure the token in the hosting provider's server-side secrets, and verify the live URL.
+- [ ] Complete an end-to-end check using an approved de-identified MRI; this is separate from the synthetic smoke test.
 - [ ] Configure private artifact access in the hosting provider, deploy, and verify the live URL.
 
 ### Reported experiment results
@@ -69,7 +72,7 @@ If the checkpoints are available as files that the application process can read,
 - `BRAIN_MRI_CLASSIFIER_CHECKPOINT` — existing EfficientNet-B0 checkpoint.
 - `BRAIN_MRI_SEGMENTER_CHECKPOINT` — existing BCE U-Net checkpoint.
 
-For the existing private GitHub Release, the hosted app can use a fine-grained, repository-scoped `Contents: Read-only` token in the server-side secret `BRAIN_MRI_GITHUB_TOKEN`. The release asset IDs and SHA-256 checks are pinned in the inference module. See [online platform deployment](docs/online_platform_deployment.md) for the redirect security model and exact Streamlit configuration.
+For the existing published pre-release in the private GitHub repository, the hosted app can use a fine-grained, repository-scoped `Contents: Read-only` token in the server-side secret `BRAIN_MRI_GITHUB_TOKEN`. The release asset IDs and SHA-256 checks are pinned in the inference module. See [online platform deployment](docs/online_platform_deployment.md) for the redirect security model and exact Streamlit configuration.
 
 The original research paths are:
 
