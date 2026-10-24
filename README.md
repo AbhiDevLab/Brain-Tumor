@@ -6,7 +6,7 @@ Research prototype for four-class classification of 2D brain MRI images and bina
 
 ## Current status — 24 October 2026
 
-The research experiments are complete according to the run results supplied by the researcher, and this branch adds an inference pipeline and online-platform UI. The actual model files remain in Google Drive / a private artifact store and are intentionally excluded from Git. This GitHub-connected work environment does not have the researcher's Drive mounted, so successful inference with those exact checkpoints and a live deployment have **not yet been verified**.
+The research experiments are complete according to the run results supplied by the researcher, and this branch adds an inference pipeline and online-platform UI. The actual model files remain excluded from ordinary Git history and are available in the private draft GitHub Release. Its asset IDs, sizes and SHA-256 metadata have now been inspected and match the supplied hashes. The application has a pinned, authenticated GitHub Release downloader and a GitHub Actions smoke-test job that will download the real weights, verify their bytes, load the model architectures, and execute inference using a synthetic software-test pattern. Live hosting and an end-to-end run on an approved de-identified MRI remain separate acceptance gates.
 
 - [x] Existing EfficientNet-B0 and U-Net architecture/preprocessing inspected.
 - [x] Feature branch `feature/online-mri-research-platform` created from `research/colab-baseline-2026-10-21`.
