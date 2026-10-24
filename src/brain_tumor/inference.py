@@ -3,14 +3,20 @@ from __future__ import annotations
 import hashlib
 import io
 import os
+import re
+import tempfile
 import warnings
+from functools import lru_cache
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
-from PIL import Image, ImageFile, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
 
 from src.brain_tumor.data import classify_image_tensor, segmentation_image_tensor
 from src.brain_tumor.explain import generate_gradcam, overlay_gradcam
@@ -38,16 +44,112 @@ class CheckpointError(RuntimeError):
     """A configured model artifact could not be loaded safely."""
 
 
+MAX_REMOTE_ARTIFACT_BYTES = 2 * 1024 * 1024 * 1024
+
+
+def _download_private_artifact(kind: str, url: str, token: str, expected_sha256: str) -> Path:
+    """Download a private checkpoint over HTTPS into an ephemeral server-side cache.
+
+    The URL is an endpoint, not a signed URL: credentials belong in a separate
+    read-only Bearer token. A trusted SHA-256 value is required before loading.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise CheckpointError("The private artifact endpoint must be a clean HTTPS URL without embedded credentials or query parameters.")
+    if not token or not re.fullmatch(r"[0-9a-fA-F]{64}", expected_sha256 or ""):
+        raise CheckpointError("Private artifact access requires a read-only token and an expected SHA-256 checksum.")
+    expected_sha256 = expected_sha256.lower()
+    cache_root = Path(os.environ.get(
+        "BRAIN_MRI_MODEL_CACHE_DIR",
+        str(Path(tempfile.gettempdir()) / "brain-mri-model-artifacts"),
+    )).expanduser()
+    try:
+        cache_root.mkdir(parents=True, exist_ok=True)
+        try:
+            cache_root.chmod(0o700)
+        except OSError:
+            pass
+        destination = cache_root / f"{kind}-{expected_sha256[:20]}.pt"
+        if destination.is_file() and _sha256(destination) == expected_sha256:
+            return destination
+        if destination.exists():
+            destination.unlink()
+
+        request = Request(
+            url,
+            headers={"Authorization": f"Bearer {token}", "User-Agent": "BrainTumorMRIResearch/1.0"},
+            method="GET",
+        )
+        temp_path: Path | None = None
+        try:
+            with urlopen(request, timeout=90) as response:
+                final_url = urlparse(response.geturl())
+                if final_url.scheme != "https" or final_url.username or final_url.password or final_url.query:
+                    raise CheckpointError("The private artifact endpoint redirected to an unsafe URL.")
+                advertised_size = response.headers.get("Content-Length")
+                if advertised_size and int(advertised_size) > MAX_REMOTE_ARTIFACT_BYTES:
+                    raise CheckpointError("The private model artifact exceeds the allowed size.")
+                with tempfile.NamedTemporaryFile(
+                    mode="wb", prefix=f".{kind}-", suffix=".download",
+                    dir=cache_root, delete=False,
+                ) as temp_file:
+                    temp_path = Path(temp_file.name)
+                    byte_count = 0
+                    digest = hashlib.sha256()
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        byte_count += len(chunk)
+                        if byte_count > MAX_REMOTE_ARTIFACT_BYTES:
+                            raise CheckpointError("The private model artifact exceeds the allowed size.")
+                        digest.update(chunk)
+                        temp_file.write(chunk)
+            if digest.hexdigest() != expected_sha256:
+                raise CheckpointError("The downloaded model artifact failed its SHA-256 integrity check.")
+            try:
+                temp_path.chmod(0o600)
+            except OSError:
+                pass
+            temp_path.replace(destination)
+            return destination
+        finally:
+            if temp_path is not None and temp_path.exists():
+                temp_path.unlink()
+    except CheckpointError:
+        raise
+    except (HTTPError, URLError, OSError, ValueError) as exc:
+        # Do not echo endpoint, token, local path, response body or provider details.
+        raise CheckpointError(f"The private {kind} checkpoint could not be retrieved.") from exc
+
+
+@lru_cache(maxsize=2)
 def configured_checkpoint_path(kind: str) -> Path:
-    """Resolve a server-side path without exposing it to the browser."""
+    """Resolve a server-side file path or securely retrieve a private artifact.
+
+    Configure one of BRAIN_MRI_<KIND>_CHECKPOINT (local/mounted file), or
+    BRAIN_MRI_<KIND>_URL, *_TOKEN and *_SHA256 (private HTTPS artifact).
+    The artifact resolution is cached for the process; restart the app after
+    changing hosting secrets.
+    """
     if kind == "classifier":
-        env_name, default = "BRAIN_MRI_CLASSIFIER_CHECKPOINT", DEFAULT_CLASSIFIER_PATH
+        prefix, default = "BRAIN_MRI_CLASSIFIER", DEFAULT_CLASSIFIER_PATH
     elif kind == "segmenter":
-        env_name, default = "BRAIN_MRI_SEGMENTER_CHECKPOINT", DEFAULT_SEGMENTER_PATH
+        prefix, default = "BRAIN_MRI_SEGMENTER", DEFAULT_SEGMENTER_PATH
     else:
         raise ValueError("kind must be 'classifier' or 'segmenter'")
-    configured = os.environ.get(env_name)
-    return Path(configured).expanduser() if configured else default
+    configured = os.environ.get(f"{prefix}_CHECKPOINT")
+    if configured:
+        return Path(configured).expanduser()
+    url = os.environ.get(f"{prefix}_URL")
+    if not url:
+        return default
+    return _download_private_artifact(
+        kind,
+        url,
+        os.environ.get(f"{prefix}_TOKEN", ""),
+        os.environ.get(f"{prefix}_SHA256", ""),
+    )
 
 
 def validate_uploaded_image(
