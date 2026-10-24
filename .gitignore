@@ -17,3 +17,9 @@ data/**
 !data/.keep
 artifacts/**
 !artifacts/.keep
+
+# Model checkpoints must use private artifact storage, never ordinary Git history.
+*.pt
+*.pth
+*.ckpt
+*.safetensors
