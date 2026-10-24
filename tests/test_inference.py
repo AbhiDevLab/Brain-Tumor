@@ -72,7 +72,7 @@ def test_validate_uploaded_image_rejects_overlarge_dimensions():
 
 
 def test_preprocessing_contracts_are_distinct():
-    image = Image.fromarray(np.full((64, 64, 3), 128, dtype=np.uint8), mode="RGB")
+    image = Image.fromarray(np.full((64, 64, 3), 64, dtype=np.uint8), mode="RGB")
     classifier_tensor = inference.classify_image_tensor(image, 32)
     segmenter_tensor = inference.segmentation_image_tensor(image, 32)
     assert tuple(classifier_tensor.shape) == (1, 3, 32, 32)
