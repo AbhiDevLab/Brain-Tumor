@@ -316,7 +316,7 @@ def _download_private_artifact(kind: str, url: str, token: str, expected_sha256:
         raise CheckpointError(f"The private {kind} checkpoint could not be retrieved.") from exc
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=3)
 def configured_checkpoint_path(kind: str) -> Path:
     """Resolve local files, explicit private HTTPS endpoints, or the pinned GitHub Release.
 
@@ -325,11 +325,16 @@ def configured_checkpoint_path(kind: str) -> Path:
     generic path for clear missing-checkpoint handling. Restart after changing secrets.
     """
     if kind == "classifier":
-        prefix, default = "BRAIN_MRI_CLASSIFIER", DEFAULT_CLASSIFIER_PATH
+        prefix = "BRAIN_MRI_CLASSIFIER"
+        default = DEFAULT_CLASSIFIER_PATH
     elif kind == "segmenter":
-        prefix, default = "BRAIN_MRI_SEGMENTER", DEFAULT_SEGMENTER_PATH
+        prefix = "BRAIN_MRI_SEGMENTER"
+        default = DEFAULT_SEGMENTER_PATH
+    elif kind == "segmenter_bce_dice":
+        prefix = "BRAIN_MRI_SEGMENTER_BCE_DICE"
+        default = Path(__file__).resolve().parents[2] / "artifacts" / "unet_bce_dice.pt"
     else:
-        raise ValueError("kind must be 'classifier' or 'segmenter'")
+        raise ValueError("kind must be 'classifier', 'segmenter', or 'segmenter_bce_dice'")
     configured = os.environ.get(f"{prefix}_CHECKPOINT")
     if configured:
         return Path(configured).expanduser()
@@ -357,8 +362,11 @@ def checkpoint_source_status(kind: str) -> str:
         prefix, default = "BRAIN_MRI_CLASSIFIER", DEFAULT_CLASSIFIER_PATH
     elif kind == "segmenter":
         prefix, default = "BRAIN_MRI_SEGMENTER", DEFAULT_SEGMENTER_PATH
+    elif kind == "segmenter_bce_dice":
+        prefix = "BRAIN_MRI_SEGMENTER_BCE_DICE"
+        default = Path(__file__).resolve().parents[2] / "artifacts" / "unet_bce_dice.pt"
     else:
-        raise ValueError("kind must be 'classifier' or 'segmenter'")
+        raise ValueError("kind must be 'classifier', 'segmenter', or 'segmenter_bce_dice'")
     local = os.environ.get(f"{prefix}_CHECKPOINT")
     if local:
         return "local_available" if Path(local).expanduser().is_file() else "local_missing"
