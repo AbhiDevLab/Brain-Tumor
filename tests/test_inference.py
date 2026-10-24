@@ -415,3 +415,30 @@ def test_checkpoint_source_status_supports_private_github_release(monkeypatch):
     assert inference.checkpoint_source_status("classifier") == "github_configured"
     assert "secret-must-not-be-returned" not in inference.checkpoint_source_status("classifier")
     monkeypatch.delenv("BRAIN_MRI_GITHUB_TOKEN")
+
+
+
+def test_github_release_redirect_allowlist_accepts_only_known_github_asset_hosts():
+    assert inference._allowed_github_asset_redirect("release-assets.githubusercontent.com")
+    assert inference._allowed_github_asset_redirect("objects.githubusercontent.com")
+    assert inference._allowed_github_asset_redirect("github-production-release-asset-abc123.s3.amazonaws.com")
+    assert not inference._allowed_github_asset_redirect("attacker.example.com")
+    assert not inference._allowed_github_asset_redirect("github.com.attacker.example.com")
+
+
+def test_optional_bce_dice_release_asset_metadata_is_pinned():
+    asset = inference.GITHUB_RELEASE_ASSETS["segmenter_bce_dice"]
+    assert asset["asset_id"] == 661318090
+    assert asset["name"] == "unet_bce_dice_best_20261020T205900Z.pt"
+    assert asset["sha256"] == "346c701760b56d27def9d779f2d6e96f740579454fcc8a2db623ccfc28edc008"
+    assert asset["architecture"] == "unet_binary"
+
+
+def test_checkpoint_source_status_supports_comparison_model(monkeypatch, tmp_path):
+    monkeypatch.delenv("BRAIN_MRI_SEGMENTER_BCE_DICE_CHECKPOINT", raising=False)
+    monkeypatch.delenv("BRAIN_MRI_SEGMENTER_BCE_DICE_URL", raising=False)
+    monkeypatch.delenv("BRAIN_MRI_GITHUB_TOKEN", raising=False)
+    monkeypatch.setattr(inference.Path, "is_file", lambda self: False)
+    assert inference.checkpoint_source_status("segmenter_bce_dice") == "unavailable"
+    monkeypatch.setenv("BRAIN_MRI_GITHUB_TOKEN", "read-only")
+    assert inference.checkpoint_source_status("segmenter_bce_dice") == "github_configured"
