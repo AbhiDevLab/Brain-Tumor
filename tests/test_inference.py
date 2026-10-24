@@ -442,3 +442,21 @@ def test_checkpoint_source_status_supports_comparison_model(monkeypatch, tmp_pat
     assert inference.checkpoint_source_status("segmenter_bce_dice") == "unavailable"
     monkeypatch.setenv("BRAIN_MRI_GITHUB_TOKEN", "read-only")
     assert inference.checkpoint_source_status("segmenter_bce_dice") == "github_configured"
+
+
+
+def test_github_release_asset_403_explains_missing_draft_release_access(tmp_path, monkeypatch):
+    import io
+    from email.message import Message
+    from urllib.error import HTTPError
+
+    class FakeOpener:
+        def open(self, request, timeout):
+            headers = Message()
+            raise HTTPError(request.full_url, 403, "Forbidden", headers, io.BytesIO(b"private response body"))
+
+    monkeypatch.setattr(inference, "build_opener", lambda *_args, **_kwargs: FakeOpener())
+    with pytest.raises(inference.CheckpointError, match="HTTP 403") as caught:
+        inference._download_github_release_asset("classifier", "top-secret-token", cache_dir=tmp_path)
+    assert "top-secret-token" not in str(caught.value)
+    assert "private response body" not in str(caught.value)
