@@ -72,8 +72,6 @@ with st.expander("How it works and supported inputs", expanded=False):
         """
     )
 
-ROOT = Path(__file__).resolve().parent
-
 # Copy only expected model settings from Streamlit's server-side secrets store.
 _SECRET_KEYS = (
     "BRAIN_MRI_CLASSIFIER_CHECKPOINT", "BRAIN_MRI_CLASSIFIER_URL",
