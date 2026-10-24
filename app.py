@@ -74,10 +74,37 @@ with st.expander("How it works and supported inputs", expanded=False):
     )
 
 ROOT = Path(__file__).resolve().parent
-classifier_path = configured_checkpoint_path("classifier")
-segmenter_path = configured_checkpoint_path("segmenter")
+
+# Copy only expected model settings from Streamlit's server-side secrets store.
+_SECRET_KEYS = (
+    "BRAIN_MRI_CLASSIFIER_CHECKPOINT", "BRAIN_MRI_CLASSIFIER_URL",
+    "BRAIN_MRI_CLASSIFIER_TOKEN", "BRAIN_MRI_CLASSIFIER_SHA256",
+    "BRAIN_MRI_SEGMENTER_CHECKPOINT", "BRAIN_MRI_SEGMENTER_URL",
+    "BRAIN_MRI_SEGMENTER_TOKEN", "BRAIN_MRI_SEGMENTER_SHA256",
+    "BRAIN_MRI_MODEL_CACHE_DIR",
+)
+for _secret_key in _SECRET_KEYS:
+    if not os.environ.get(_secret_key):
+        try:
+            _secret_value = st.secrets.get(_secret_key)
+        except Exception:
+            _secret_value = None
+        if _secret_value:
+            os.environ[_secret_key] = str(_secret_value)
+
 device_name = "cuda" if torch.cuda.is_available() else "cpu"
 device = torch.device(device_name)
+artifact_setup_errors: dict[str, str] = {}
+try:
+    classifier_path = configured_checkpoint_path("classifier")
+except CheckpointError:
+    classifier_path = None
+    artifact_setup_errors["classifier"] = "The private classifier artifact could not be retrieved. Check its server-side URL, read-only token, and SHA-256 checksum."
+try:
+    segmenter_path = configured_checkpoint_path("segmenter")
+except CheckpointError:
+    segmenter_path = None
+    artifact_setup_errors["segmenter"] = "The private segmentation artifact could not be retrieved. Check its server-side URL, read-only token, and SHA-256 checksum."
 
 
 @st.cache_resource(show_spinner=False)
@@ -95,11 +122,11 @@ with st.expander("Model availability", expanded=False):
     a, b = st.columns(2)
     with a:
         st.markdown("**EfficientNet-B0 classifier**")
-        st.write("Configured checkpoint found" if classifier_path.is_file() else "Checkpoint unavailable")
+        st.write("Configured checkpoint found" if classifier_path and classifier_path.is_file() else "Checkpoint unavailable")
         st.caption("Expected output: glioma, meningioma, pituitary tumor, or no tumor.")
     with b:
         st.markdown("**BCE U-Net segmenter**")
-        st.write("Configured checkpoint found" if segmenter_path.is_file() else "Checkpoint unavailable")
+        st.write("Configured checkpoint found" if segmenter_path and segmenter_path.is_file() else "Checkpoint unavailable")
         st.caption("Default threshold: 0.50. The BCE + Dice experiment is not the default.")
     st.caption(f"Inference device: {'CUDA GPU' if device_name == 'cuda' else 'CPU'}.")
 
@@ -165,8 +192,10 @@ if st.button("Run MRI analysis", type="primary", use_container_width=True):
     segmentation = None
     errors: list[str] = []
     with st.spinner("Loading available checkpoints and running inference…"):
-        if not classifier_path.is_file():
-            errors.append("Classifier checkpoint is unavailable. Configure BRAIN_MRI_CLASSIFIER_CHECKPOINT on the server.")
+        if "classifier" in artifact_setup_errors:
+            errors.append(artifact_setup_errors["classifier"])
+        elif not classifier_path or not classifier_path.is_file():
+            errors.append("Classifier checkpoint is unavailable. Configure BRAIN_MRI_CLASSIFIER_CHECKPOINT or the private classifier artifact settings on the server.")
         else:
             try:
                 stat = classifier_path.stat()
@@ -179,8 +208,10 @@ if st.button("Run MRI analysis", type="primary", use_container_width=True):
             except Exception:
                 errors.append("Classifier inference failed. No classification result is available for this image.")
 
-        if not segmenter_path.is_file():
-            errors.append("Segmentation checkpoint is unavailable. Configure BRAIN_MRI_SEGMENTER_CHECKPOINT on the server.")
+        if "segmenter" in artifact_setup_errors:
+            errors.append(artifact_setup_errors["segmenter"])
+        elif not segmenter_path or not segmenter_path.is_file():
+            errors.append("Segmentation checkpoint is unavailable. Configure BRAIN_MRI_SEGMENTER_CHECKPOINT or the private segmentation artifact settings on the server.")
         else:
             try:
                 stat = segmenter_path.stat()
