@@ -22,3 +22,28 @@ jobs:
         run: python -m compileall -q app.py audit_dataset.py audit_brisc.py prepare_brisc.py train_classifier.py train_segmenter.py evaluate_classifier.py evaluate_segmenter.py src tests
       - name: Run tests
         run: pytest -q
+
+  real-checkpoint-inference:
+    # Only download private model artifacts for this dedicated deployment branch.
+    if: github.ref == 'refs/heads/feature/online-mri-research-platform' || (github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feature/online-mri-research-platform')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      # Ephemeral repository-scoped token; never printed or available to the web app.
+      BRAIN_MRI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install inference dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Compile deployment code
+        run: python -m compileall -q app.py src scripts tests
+      - name: Download pinned release assets, verify SHA-256, and run real-weight smoke inference
+        run: python scripts/checkpoint_smoke.py
