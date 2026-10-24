@@ -174,6 +174,12 @@ def _download_github_release_asset(
                 status = int(exc.code)
                 location = exc.headers.get("Location") if exc.headers else None
                 exc.close()
+                if status == 403:
+                    raise CheckpointError(
+                        "GitHub denied access to the private draft release asset (HTTP 403). "
+                        "Configure BRAIN_MRI_GITHUB_TOKEN with a repository-scoped, read-only "
+                        "token for an account that can access this draft release."
+                    )
                 if status not in {301, 302, 303, 307, 308} or not location:
                     raise CheckpointError("The private GitHub release asset request failed.")
                 current_url = urljoin(current_url, location)
