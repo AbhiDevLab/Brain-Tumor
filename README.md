@@ -1,126 +1,102 @@
-# Brain Tumor MRI Research Prototype
+# Brain Tumor MRI Analysis
 
-A small research project for classifying 2D brain MRI images and segmenting tumor regions. The first goal is to establish reproducible baselines and verify the dataset before testing architectural changes.
+Research prototype for four-class classification of 2D brain MRI images and binary foreground segmentation, using the project's existing trained EfficientNet-B0 classifier and U-Net checkpoints. The Streamlit interface is a research and educational demonstration, not a medical device.
 
-## Current status
+> **Research-use warning:** The models have not been clinically validated. Scores and masks can be wrong. Do not use them for diagnosis, treatment, triage, or other medical decisions. Upload only de-identified 2D images, and have real MRI studies reviewed by qualified medical professionals.
 
-- EfficientNet-B0 classifier for four image classes: glioma, meningioma, pituitary tumor, and no tumor.
-- U-Net baseline for binary tumor masks.
-- Separate training and evaluation scripts.
-- Dataset checks for class distribution, image duplicates across splits, and image/mask pairing.
-- A BRISC 2025 preflight auditor for class counts, mask pairing, sampled mask pixel intensities, exact cross-split duplicates, and available manifest identifiers.
-- A Streamlit interface scaffold for local experiments.
-- `prepare_brisc.py` to remove exact train/test image-hash overlap from the training side, create a reproducible validation split, and preserve official test files.
+## Current status — 24 October 2026
 
-No model has been trained on the project dataset yet. The repository does not contain trained weights or validated performance results. This is a research prototype, not a clinical diagnostic tool.
+The research experiments are complete according to the run results supplied by the researcher, and this branch adds an inference pipeline and online-platform UI. The actual model files remain in Google Drive / a private artifact store and are intentionally excluded from Git. This GitHub-connected work environment does not have the researcher's Drive mounted, so successful inference with those exact checkpoints and a live deployment have **not yet been verified**.
 
-## Research documents and presentation
+- [x] Existing EfficientNet-B0 and U-Net architecture/preprocessing inspected.
+- [x] Feature branch `feature/online-mri-research-platform` created from `research/colab-baseline-2026-10-21`.
+- [x] Checkpoint path configuration, strict architecture/state-dictionary loading, private HTTPS retrieval with a separate read-only token and SHA-256 validation added.
+- [x] Image validation, in-memory inference functions, model-score reporting, mask/overlay alignment, preliminary consistency rules, JSON report construction, and unit tests added.
+- [x] Streamlit interface updated with de-identified upload guidance, result dashboard, Grad-CAM distinction, error handling, and research warnings.
+- [ ] Run the full test suite on the feature branch in a Python environment with project dependencies.
+- [ ] Load the actual classifier and BCE U-Net checkpoints and run a real-checkpoint inference smoke test.
+- [ ] Configure private artifact access in the hosting provider, deploy, and verify the live URL.
 
-- [Research vs. proposed contribution flowchart](docs/research_gap_and_proposed_contribution.md) — distinguishes established methods from the baseline and experiments we plan to test.
-- [Paper reproduction and claim-verification plan](docs/paper_reproduction_plan.md) — maps the previously reviewed studies to what can and cannot be reproduced, with comparison rules.
-- [BRISC audit findings and split limitations](docs/brisc_audit_findings.md) — records the observed exact duplicate overlap and missing patient identifiers.
-- [Presentation speech](docs/presentation_speech.md) — approx. two-minute explanation of the flowchart.
-- [Consolidated project status and next steps](docs/project_status_summary.md) — current implementation, evaluation status, and Windows setup checklist.
-- [Research documentation index](docs/README.md).
+### Reported experiment results
 
-The proposed improvement is **not yet demonstrated**. We will only report gains if controlled, held-out evaluation supports them.
+The metrics in this table were supplied by the researcher and have not been recomputed in the current runtime.
 
-## Setup
+| Model | Evaluation set | Reported metrics |
+|---|---|---|
+| EfficientNet-B0 classifier | 1,000-image classification test set | Accuracy **99.40%**; macro-F1 **0.993945**; weighted-F1 **0.994000** |
+| BCE U-Net | 854 cleaned segmentation image-mask pairs | Mean Dice **0.799568**; mean IoU **0.718709** |
+| BCE + soft Dice U-Net | Same 854 pairs | Mean Dice **0.799782**; mean IoU **0.716567** |
 
-Python 3.11 is recommended. From the repository directory:
+The paired bootstrap comparison reportedly found no convincing overall improvement from BCE + Dice; both 95% confidence intervals included zero. The platform therefore defaults to the BCE U-Net. These evaluation metrics are not performance guarantees on arbitrary MRI images and do not establish external, patient-independent, or clinical validation.
 
-\`\`\`powershell
+## Project contents
+
+- `app.py` — Streamlit upload, inference dashboard, warnings, and JSON download.
+- `src/brain_tumor/models.py` — existing EfficientNet-B0 and U-Net architecture definitions.
+- `src/brain_tumor/data.py` — existing classifier and segmenter preprocessing.
+- `src/brain_tumor/explain.py` — classifier Grad-CAM attribution visualization.
+- `src/brain_tumor/inference.py` — checkpoint validation/loading, secure private artifact retrieval, input validation, prediction, preliminary consistency checks, and JSON-ready report.
+- `train_classifier.py`, `train_segmenter.py` — training workflows (not invoked by the web app).
+- `evaluate_classifier.py`, `evaluate_segmenter.py` — evaluation scripts.
+- `tests/` — architecture, preprocessing, loss, and inference-contract tests.
+- `docs/online_platform_deployment.md` — artifact and hosting instructions.
+- `docs/brisc_audit_findings.md` — dated data-audit findings and split caveats.
+- `docs/paper_reproduction_plan.md` — research claim and reproduction checklist.
+- `docs/research_gap_and_proposed_contribution.md` — methods and proposed experiments.
+- `docs/project_status_summary.md` — consolidated status; its original 20 October snapshot is retained as history.
+
+## Setup and local execution
+
+Python 3.11 is recommended. From the repository root:
+
+```powershell
 py -3.11 -m venv .venv
-.\\.venv\\Scripts\\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -r requirements.txt
 pip install -r requirements-dev.txt
-\`\`\`
-
-Run the tests:
-
-\`\`\`powershell
 python -m pytest -q
-\`\`\`
-
-Start the interface:
-
-\`\`\`powershell
 streamlit run app.py
-\`\`\`
-
-## Data
-
-The project training scripts expect two separate data layouts. Keep patients in only one split whenever patient identifiers are available.
-
-Classification images:
-
-\`\`\`text
-data/classification/{train,val,test}/{glioma,meningioma,pituitary,no_tumor}/
-\`\`\`
-
-Segmentation images and their binary masks:
-
-\`\`\`text
-data/segmentation/images/{train,val,test}/
-data/segmentation/masks/{train,val,test}/
-\`\`\`
-
-The matching image and mask files must share the same filename stem. Review the dataset contract and run the audit scripts before training. Do not use class-labelled images as if they had segmentation masks.
-
-### Audit the raw BRISC 2025 download
-
-After downloading and extracting BRISC 2025, run:
-
-\`\`\`bash
-python audit_brisc.py --root /path/to/brisc2025 --output artifacts/brisc_audit.json
-\`\`\`
-
-In Colab, for the current notebook path:
-
-\`\`\`bash
-python audit_brisc.py --root /content/kaggle_data/brisc2025 --output /content/brisc_audit.json
-\`\`\`
-
-The audit checks folder/class counts, image-mask filename pairing, a sample of mask grayscale values, exact-byte duplicates across the dataset's train/test splits, and whether the manifest provides patient/subject identifiers. It does **not** detect near-duplicates or prove patient-level separation when identifiers are unavailable. The mask binarization threshold defaults to 128 because reviewed examples contained near-black values (0–7) and near-white values (248–255); inspect the full audit output before locking preprocessing.
-
-Keep datasets and trained weights outside Git.
-
-### Audit and prepare BRISC 2025
-
-After downloading and extracting the dataset, audit the raw files first:
-
-```bash
-python audit_brisc.py --root /path/to/brisc2025 --output /path/to/brisc_audit.json
 ```
 
-Then create a separately prepared dataset. The script retains the supplied test images and masks, removes from the training side any exact image hashes also present in test, removes safe training-only exact duplicates, and takes validation samples from the remaining training set:
+On Linux/macOS, create and activate a virtual environment using the platform's usual `python3 -m venv .venv` and activation commands.
 
-```bash
-python prepare_brisc.py --root /path/to/brisc2025 --output /path/to/processed_brisc --val-fraction 0.15 --seed 42
-```
+Without checkpoints, the app should clearly report that the relevant model is unavailable; it must not generate a fake prediction. Configure the paths or private artifact retrieval as described in [Online platform deployment](docs/online_platform_deployment.md).
 
-In Colab, use:
+### Local checkpoint paths
 
-```bash
-python audit_brisc.py --root /content/kaggle_data/brisc2025 --output /content/brisc_audit.json
-python prepare_brisc.py --root /content/kaggle_data/brisc2025 --output /content/processed_brisc --val-fraction 0.15 --seed 42
-```
+If the checkpoints are available as files that the application process can read, set these environment variables before launching Streamlit:
 
-The output includes `prepared_manifest.csv` and `preparation_report.json`. Patient-level independence cannot be confirmed if the dataset provides no patient/subject IDs. Exact hashes do not detect near-duplicates.
+- `BRAIN_MRI_CLASSIFIER_CHECKPOINT` — existing EfficientNet-B0 checkpoint.
+- `BRAIN_MRI_SEGMENTER_CHECKPOINT` — existing BCE U-Net checkpoint.
 
-The audit run captured on 20 October 2026 found seven groups of byte-identical images crossing train/test in each task; nine training file paths were affected because one duplicate group included three training copies. Before training, inspect the raw audit's manifest-checksum results and confirm that the preparation report records zero train/validation-to-test image-hash overlap.
+The original research paths are:
 
-Sampled masks contain near-black background values (0–7) and near-white foreground values (mostly 248–255). The current loader thresholds at 128 and resizes masks using nearest-neighbor interpolation. This preprocessing choice still needs review against the full audit and visual examples; it is not a claim of complete annotation validation.
+- `/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt`
+- `/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.pt`
+- Optional research comparison, not default: `/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_dice_best_20261020T205900Z.pt`
 
-Keep raw/prepared datasets and model weights outside Git.
+These are Colab/Drive paths, not automatically available to an online host. For deployment, use a private HTTPS artifact endpoint and the variables documented in [Online platform deployment](docs/online_platform_deployment.md). The endpoint must use a separate read-only token and expected SHA-256 hash; do not put raw model binaries, credentials, or secrets in ordinary Git history. The app verifies the downloaded artifact's hash before loading it.
 
-## Experiments
+## Data contract and limitations
 
-The first segmentation comparison keeps the U-Net and data split fixed while changing the loss from binary cross-entropy to binary cross-entropy plus Dice loss. Dice score is the primary overlap metric; tumor recall is tracked to guard against missed tumor pixels. More complex attention or detector models come later only if the baseline results justify them.
+This version accepts 2D PNG, JPG/JPEG, BMP and TIFF/TIF images up to 12 MiB. It validates extension/content, decodability, pixel dimensions and file size. For a multi-frame TIFF, the first frame is used.
 
-See \`docs/experiment_plan.md\`, \`docs/implementation_status.md\`, and \`docs/paper_reproduction_plan.md\` for the working plan and current limitations.
+The classifier follows its saved checkpoint class order and the repository's ImageNet-normalized preprocessing (generally 224 × 224). Its displayed softmax values are **uncalibrated model scores**, not validated probabilities.
 
-## Scope and limitations
+The U-Net follows its training-compatible RGB scaling to [0, 1] (generally 256 × 256), without adding ImageNet normalization. Its default mask threshold is 0.50, which has not yet been calibrated through the planned validation-only threshold experiment. Foreground pixels/fraction are image-grid measures, not physical tumor measurements.
 
-The current implementation targets 2D images and binary masks. DICOM/NIfTI volume handling, multi-region segmentation, YOLO replication, transformer models, calibration, and independent external validation are not yet implemented. Grad-CAM is an attribution visualization, not a segmentation mask or proof of clinical reasoning.
+Grad-CAM is a classifier attribution visualization and is not the U-Net segmentation mask. The predicted mask is model-generated and is not a clinically confirmed tumor boundary. Preliminary classifier/segmenter consistency rules may flag disagreements, but have not been validated, are not a reliability gate, and do not suppress either output.
+
+**Not supported:** DICOM, NIfTI, full 3D volumes, multiple MRI sequences, physical voxel measurements, patient records, clinical interpretation, and external clinical validation.
+
+## Research history and data audit
+
+The original research documents preserve the earlier planning status and dated audit findings. In particular, the 20 October 2026 BRISC audit recorded seven groups of byte-identical images crossing train/test in each task and noted that the manifest did not provide explicit patient/subject identifiers. See [BRISC audit findings](docs/brisc_audit_findings.md) and [paper reproduction plan](docs/paper_reproduction_plan.md). Do not claim that these splits establish patient-wise independence. Exact hashes do not detect near-duplicates or identify the same patient across different images.
+
+The earlier proposed contribution remains a set of research hypotheses. The small reported mean Dice difference between BCE and BCE + Dice is not convincing evidence of an improvement. Attention-gated U-Net changes, reliability gating, threshold calibration, model calibration and external validation remain planned work—not features or findings already validated by this platform.
+
+## Deployment
+
+See [docs/online_platform_deployment.md](docs/online_platform_deployment.md) for Streamlit Community Cloud setup, private artifact retrieval, server-side secret configuration, local paths, resource limitations and pre-deployment checks.
+
+Do not call the application deployed until the hosting provider returns a real URL and a smoke test confirms that the live process can load both intended checkpoints and run inference. The current feature branch has not been deployed or live-verified.
