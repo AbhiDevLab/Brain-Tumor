@@ -50,9 +50,37 @@ streamlit run app.py
 
 Do not put these files in the Git repository. A Colab `/content/drive/...` path is only valid while that Drive is actually mounted in that Colab runtime.
 
-### Option B — private HTTPS artifact endpoint
+### Option B — existing private GitHub Release (preferred)
 
-For a hosted server without Drive access, the application can retrieve each checkpoint from a private HTTPS download endpoint. The endpoint must return the raw model file to a server-side GET request authenticated by a separate, narrowly scoped **read-only Bearer token**. The URL must not contain credentials or query parameters, and the endpoint must return the model bytes directly without redirecting. Configure all six values in the host's secret manager:
+The trained best checkpoints already exist in the private draft release [Brain Tumor Baseline Checkpoints — 2026-10-21](https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b). The application is configured to retrieve the two pinned best assets directly through the GitHub Release asset API. No second artifact store or model upload is required.
+
+| Model | Release asset ID | Expected SHA-256 |
+|---|---:|---|
+| EfficientNet-B0 | `660318425` | `c0775f865d8a4811f10b50818fb44ce62d8b08c1ecb366cf317f8242eb38f9d8` |
+| BCE U-Net | `660464605` | `7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357` |
+| BCE + soft Dice U-Net (optional) | `661318090` | `346c701760b56d27def9d779f2d6e96f740579454fcc8a2db623ccfc28edc008` |
+
+The API returned these three best-asset IDs, names, sizes and SHA-256 digests; each digest matched the value supplied for the release. The release is still marked as a **draft**. The inference loader pins the asset IDs, expected sizes and hashes; it does not select a `.latest.pt` recovery checkpoint.
+
+#### Hosted app setup
+
+1. Create a **fine-grained personal access token** on GitHub. Restrict it to only the `AbhiDevLab/Brain-Tumor` repository and grant **Contents: Read-only**. The GitHub [Get a release asset API](https://docs.github.com/en/rest/releases/assets) specifies read-only Contents permission for fine-grained tokens. Never give the token write access for this app.
+2. In Streamlit Community Cloud, open your app's **Settings → Secrets** and add only:
+   ```toml
+   BRAIN_MRI_GITHUB_TOKEN = "YOUR_FINE_GRAINED_READ_ONLY_TOKEN"
+   ```
+3. Save the secret and restart/redeploy the app. When a user requests inference, it downloads the required best checkpoints, validates the response size and SHA-256, and then passes them to the existing strict model loaders.
+4. For GitHub Actions, the dedicated smoke-test job uses its short-lived repository `GITHUB_TOKEN` with `contents: read`; this token is not exposed to the Streamlit browser or included in the application output.
+
+#### Redirect and integrity handling
+
+The download first requests the authenticated API asset endpoint over HTTPS using `Accept: application/octet-stream`. GitHub documents that the endpoint may return binary bytes directly (HTTP 200) or redirect (HTTP 302). The loader follows redirects manually, validates HTTPS and an allow-list of GitHub release CDN hosts, and **never forwards the Authorization header after leaving `api.github.com`**. It then checks the pinned byte size and computes SHA-256 before saving/loading. Redirect URLs, query strings, tokens, response bodies and local file paths are not emitted in user-facing errors.
+
+The application caches verified files in a restricted temporary directory; that cache is runtime-local and can be downloaded again after a restart. The model binaries remain private Release assets and are never committed to Git.
+
+### Option C — alternative private HTTPS artifact endpoint
+
+For a hosted server without Drive access, the application can retrieve each checkpoint from a private HTTPS download endpoint. The endpoint must return the raw model file to a server-side GET request authenticated by a separate, narrowly scoped **read-only Bearer token**. The URL must not contain credentials or query parameters, and the endpoint must return the model bytes directly without redirecting. Configure all six values in the host's secret manager only if you choose this alternative rather than the existing GitHub Release:
 
 ```toml
 BRAIN_MRI_CLASSIFIER_URL = "https://artifacts.example.org/brain-tumor/classifier.pt"
@@ -75,7 +103,7 @@ Get-FileHash .\unet_bce_best_20261020T195800Z.pt -Algorithm SHA256
 
 Copy only the 64-character hash into the relevant secret. Restart the application after changing model secrets; the model path/resource cache is process-scoped.
 
-The remote-retrieval contract does not itself create an artifact bucket, generate a read-only token, or upload your weights. Those actions require your storage-provider account and an explicit private upload.
+Option C is only a fallback for hosts that cannot access private GitHub Release assets. It does not require moving the existing model files if you use Option B.
 
 ## Streamlit Community Cloud setup
 
@@ -89,7 +117,7 @@ Official documentation:
 Recommended manual steps:
 
 1. Sign in to Streamlit Community Cloud and authorize access to the **private** `AbhiDevLab/Brain-Tumor` repository. Select branch `feature/online-mri-research-platform`, entry point `app.py`, and a supported Python version matching the dependency environment (Python 3.11 or 3.12 is a reasonable starting point).
-2. Add the six private artifact values from Option B in the app's **Secrets** settings. Do not add secrets to Git, the README, or the browser. If using mounted file paths instead, select a host that actually makes those files accessible; Community Cloud cannot mount your Google Drive by default.
+2. Add `BRAIN_MRI_GITHUB_TOKEN` from Option B in the app's **Secrets** settings (or the six endpoint values from Option C only if you are using a separate endpoint). Do not add secrets to Git, the README, or the browser. If using mounted file paths instead, select a host that actually makes those files accessible; Community Cloud cannot mount your Google Drive by default.
 3. Deploy and wait for the host to complete dependency installation and application startup.
 4. Inspect runtime logs privately if startup fails. The UI intentionally does not reveal full paths, stack traces, tokens, or remote provider responses.
 5. Verify both checkpoints load by their expected architecture and state dictionaries, then run inference on an approved de-identified sample image. Confirm classifier output, binary mask, aligned overlay, Grad-CAM distinction, checksum metadata and JSON download.
