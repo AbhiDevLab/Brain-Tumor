@@ -69,6 +69,8 @@ If the checkpoints are available as files that the application process can read,
 - `BRAIN_MRI_CLASSIFIER_CHECKPOINT` — existing EfficientNet-B0 checkpoint.
 - `BRAIN_MRI_SEGMENTER_CHECKPOINT` — existing BCE U-Net checkpoint.
 
+For the existing private GitHub Release, the hosted app can use a fine-grained, repository-scoped `Contents: Read-only` token in the server-side secret `BRAIN_MRI_GITHUB_TOKEN`. The release asset IDs and SHA-256 checks are pinned in the inference module. See [online platform deployment](docs/online_platform_deployment.md) for the redirect security model and exact Streamlit configuration.
+
 The original research paths are:
 
 - `/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt`
