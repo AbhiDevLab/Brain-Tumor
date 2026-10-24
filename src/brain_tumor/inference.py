@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import io
 import os
 import re
@@ -173,13 +174,40 @@ def _download_github_release_asset(
             except HTTPError as exc:
                 status = int(exc.code)
                 location = exc.headers.get("Location") if exc.headers else None
-                exc.close()
                 if status == 403:
+                    # Preserve GitHub's own (sanitized) API message so CI diagnostics
+                    # distinguish permission failures from rate limits or other 403s.
+                    api_message = ""
+                    try:
+                        raw_error = exc.read(4096).decode("utf-8", "replace")
+                        if raw_error:
+                            try:
+                                error_payload = json.loads(raw_error)
+                                api_message = str(error_payload.get("message", ""))[:300]
+                            except (ValueError, AttributeError):
+                                api_message = " ".join(raw_error.split())[:300]
+                    except Exception:
+                        api_message = ""
+                    request_id = exc.headers.get("X-GitHub-Request-Id", "") if exc.headers else ""
+                    remaining = exc.headers.get("X-RateLimit-Remaining", "") if exc.headers else ""
+                    accepted_permissions = exc.headers.get("X-Accepted-GitHub-Permissions", "") if exc.headers else ""
+                    exc.close()
+                    diagnostic = []
+                    if api_message:
+                        diagnostic.append(f"GitHub API message: {api_message}")
+                    if request_id:
+                        diagnostic.append(f"GitHub request ID: {request_id}")
+                    if remaining:
+                        diagnostic.append(f"API rate-limit remaining: {remaining}")
+                    if accepted_permissions:
+                        diagnostic.append(f"Endpoint accepted permissions: {accepted_permissions}")
+                    suffix = " ".join(diagnostic)
                     raise CheckpointError(
-                        "GitHub denied access to the private draft release asset (HTTP 403). "
-                        "Configure BRAIN_MRI_GITHUB_TOKEN with a repository-scoped, read-only "
-                        "token for an account that can access this draft release."
+                        "GitHub denied access to the private release asset (HTTP 403). "
+                        f"{suffix} Check the token's repository selection, Contents: Read permission, "
+                        "resource-owner approval, and access to this release."
                     )
+                exc.close()
                 if status not in {301, 302, 303, 307, 308} or not location:
                     raise CheckpointError("The private GitHub release asset request failed.")
                 current_url = urljoin(current_url, location)
