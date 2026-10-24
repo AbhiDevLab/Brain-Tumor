@@ -1,0 +1,120 @@
+# Online MRI Research Platform — Deployment and Artifact Setup
+
+**Status date:** 24 October 2026  
+**Application entry point:** `app.py`  
+**Preferred initial host:** Streamlit Community Cloud, conditional on secure model access and available memory.
+
+This application is a research demonstration for de-identified **2D image files**. It is not clinically validated and must not be used for medical decisions. It does not support DICOM, NIfTI, full 3D volumes, or patient records.
+
+## Current checkpoint inventory
+
+Model binaries are deliberately excluded from Git. The current researcher-provided artifacts are in Google Drive:
+
+- Classifier: `/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt`
+- Classifier recovery checkpoint: corresponding `.latest.pt`
+- Default segmenter: `/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.pt`
+- BCE + Dice research comparison: `/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_dice_best_20261020T205900Z.pt`
+
+These paths are local to the researcher's Google Drive/Colab setup. A hosted application cannot assume that this Drive is mounted. The BCE U-Net is the platform default. BCE + Dice is retained as an optional research artifact, not a proven improvement.
+
+### Research metrics recorded from the completed runs
+
+The following results were provided by the researcher for documentation. They have **not been independently recomputed in the hosting environment**.
+
+| Model | Evaluation set | Reported result |
+|---|---|---|
+| EfficientNet-B0 | Classification test set, 1,000 images | Accuracy 99.40%; macro-F1 0.993945; weighted-F1 0.994000 |
+| BCE U-Net | Cleaned segmentation evaluation set, 854 image-mask pairs | Mean Dice 0.799568; mean IoU 0.718709 |
+| BCE + soft Dice U-Net | Same 854 image-mask pairs | Mean Dice 0.799782; mean IoU 0.716567 |
+
+The paired bootstrap comparison reportedly found no convincing overall BCE + Dice improvement; both 95% confidence intervals included zero. None of these metrics establishes performance on arbitrary scans, patient-independent generalization, external validation, or clinical validity.
+
+## Configure model artifacts
+
+Choose one of the following approaches per model.
+
+### Option A — local or mounted checkpoint path
+
+Set the following server-side environment variables to files the Python process can read:
+
+- `BRAIN_MRI_CLASSIFIER_CHECKPOINT`
+- `BRAIN_MRI_SEGMENTER_CHECKPOINT`
+
+For example, in PowerShell on a machine where you have securely copied the model artifacts:
+
+```powershell
+$env:BRAIN_MRI_CLASSIFIER_CHECKPOINT = "D:\private-models\efficientnet_b0_best_20261020T192345Z.pt"
+$env:BRAIN_MRI_SEGMENTER_CHECKPOINT = "D:\private-models\unet_bce_best_20261020T195800Z.pt"
+streamlit run app.py
+```
+
+Do not put these files in the Git repository. A Colab `/content/drive/...` path is only valid while that Drive is actually mounted in that Colab runtime.
+
+### Option B — private HTTPS artifact endpoint
+
+For a hosted server without Drive access, the application can retrieve each checkpoint from a private HTTPS download endpoint. The endpoint must return the raw model file to a server-side GET request authenticated by a separate, narrowly scoped **read-only Bearer token**. The URL must not contain credentials or query parameters. Configure all six values in the host's secret manager:
+
+```toml
+BRAIN_MRI_CLASSIFIER_URL = "https://artifacts.example.org/brain-tumor/classifier.pt"
+BRAIN_MRI_CLASSIFIER_TOKEN = "REPLACE_WITH_READ_ONLY_TOKEN"
+BRAIN_MRI_CLASSIFIER_SHA256 = "REPLACE_WITH_64_HEX_SHA256"
+
+BRAIN_MRI_SEGMENTER_URL = "https://artifacts.example.org/brain-tumor/segmenter-bce.pt"
+BRAIN_MRI_SEGMENTER_TOKEN = "REPLACE_WITH_READ_ONLY_TOKEN"
+BRAIN_MRI_SEGMENTER_SHA256 = "REPLACE_WITH_64_HEX_SHA256"
+```
+
+The example hostname and values are placeholders, not working credentials. Obtain the private storage and token from a provider/account you control. Do not publish the real token, model URL if access-bearing, or weights. The app checks the URL scheme, uses the token only in a server-side Authorization header, limits the download to 2 GiB, verifies SHA-256 before loading, and writes the cached artifact into a restricted temporary directory. The cache is runtime-local and can be downloaded again after the host restarts. The expected hash must come from a trusted source separate from the file download.
+
+Generate a local checksum after obtaining the original file:
+
+```powershell
+Get-FileHash .\efficientnet_b0_best_20261020T192345Z.pt -Algorithm SHA256
+Get-FileHash .\unet_bce_best_20261020T195800Z.pt -Algorithm SHA256
+```
+
+Copy only the 64-character hash into the relevant secret. Restart the application after changing model secrets; the model path/resource cache is process-scoped.
+
+The remote-retrieval contract does not itself create an artifact bucket, generate a read-only token, or upload your weights. Those actions require your storage-provider account and an explicit private upload.
+
+## Streamlit Community Cloud setup
+
+Official documentation:
+- Deploy from a GitHub repository: https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy
+- Secrets management: https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/secrets-management
+- App sharing / private repository behaviour: https://docs.streamlit.io/deploy/streamlit-community-cloud/share-your-app
+- Resource limits and platform constraints: https://docs.streamlit.io/deploy/streamlit-community-cloud/status
+- Upload handling in memory: https://docs.streamlit.io/knowledge-base/using-streamlit/where-file-uploader-store-when-deleted
+
+Recommended manual steps:
+
+1. Sign in to Streamlit Community Cloud and authorize access to the **private** `AbhiDevLab/Brain-Tumor` repository. Select branch `feature/online-mri-research-platform`, entry point `app.py`, and a supported Python version matching the dependency environment (Python 3.11 or 3.12 is a reasonable starting point).
+2. Add the six private artifact values from Option B in the app's **Secrets** settings. Do not add secrets to Git, the README, or the browser. If using mounted file paths instead, select a host that actually makes those files accessible; Community Cloud cannot mount your Google Drive by default.
+3. Deploy and wait for the host to complete dependency installation and application startup.
+4. Inspect runtime logs privately if startup fails. The UI intentionally does not reveal full paths, stack traces, tokens, or remote provider responses.
+5. Verify both checkpoints load by their expected architecture and state dictionaries, then run inference on an approved de-identified sample image. Confirm classifier output, binary mask, aligned overlay, Grad-CAM distinction, checksum metadata and JSON download.
+6. Check the live URL in a separate browser session. A private GitHub repository and a private Streamlit app are separate settings; make the app public or explicitly invite viewers depending on your sharing choice.
+
+Community Cloud resource limits vary and may be too restrictive for PyTorch + both models, especially during startup or concurrent requests. Start on CPU, measure peak memory and cold-start latency, and move to a host with more predictable RAM/compute if the app is throttled or fails. Treat temporary filesystem storage as ephemeral; do not depend on it to persist user uploads or artifacts between restarts. HTTPS and secret management are provided by the hosting platform, but must be verified in the deployed settings.
+
+## Runtime safety and privacy
+
+- Upload limit: 12 MiB; accepted suffix/content pairs: PNG, JPEG, BMP and TIFF.
+- Images are decoded in memory. The app does not create a permanent upload directory, image history, or patient database.
+- User-provided filenames are not included in the JSON report.
+- The result JSON contains pixel-based segmentation statistics, uncalibrated model scores, checkpoint names/hashes, timestamps, and review flags—not the uploaded image or personal identity fields.
+- Model weights are application-controlled artifacts only. The uploaded MRI is never loaded as a checkpoint or executed as code.
+- If a checkpoint is absent, corrupted, has an unexpected architecture, or fails strict state-dictionary loading, the app reports an unavailable result rather than making up a prediction.
+- The consistency rules (no-tumor label with a large mask, or a tumor label with a negligible mask) are preliminary heuristics. They have not been calibrated or validated and must not be described as a reliability gate.
+
+## Local validation before sharing
+
+Use the same Python major/minor version as deployment:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+streamlit run app.py
+```
+
+The inference unit tests use small controlled model doubles for software-contract checks; those tests are not medical-image performance results. Final acceptance still requires the actual saved classifier checkpoint and the actual BCE U-Net checkpoint to load and produce outputs in the intended hosted runtime. Until that real-artifact check and live smoke test happen, the deployment is not considered verified.
