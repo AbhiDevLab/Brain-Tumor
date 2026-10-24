@@ -160,6 +160,39 @@ def configured_checkpoint_path(kind: str) -> Path:
     )
 
 
+def checkpoint_source_status(kind: str) -> str:
+    """Describe checkpoint configuration without triggering any network download.
+
+    Returns one of: local_available, local_missing, private_configured,
+    private_incomplete, or unavailable. No path, URL, or token is returned.
+    """
+    if kind == "classifier":
+        prefix, default = "BRAIN_MRI_CLASSIFIER", DEFAULT_CLASSIFIER_PATH
+    elif kind == "segmenter":
+        prefix, default = "BRAIN_MRI_SEGMENTER", DEFAULT_SEGMENTER_PATH
+    else:
+        raise ValueError("kind must be 'classifier' or 'segmenter'")
+    local = os.environ.get(f"{prefix}_CHECKPOINT")
+    if local:
+        return "local_available" if Path(local).expanduser().is_file() else "local_missing"
+    url = os.environ.get(f"{prefix}_URL")
+    if url:
+        token = os.environ.get(f"{prefix}_TOKEN", "")
+        checksum = os.environ.get(f"{prefix}_SHA256", "")
+        try:
+            parsed = urlparse(url)
+            url_valid = (
+                parsed.scheme == "https" and bool(parsed.netloc)
+                and not parsed.username and not parsed.password
+                and not parsed.query and not parsed.fragment
+            )
+        except ValueError:
+            url_valid = False
+        complete = url_valid and bool(token) and bool(re.fullmatch(r"[0-9a-fA-F]{64}", checksum))
+        return "private_configured" if complete else "private_incomplete"
+    return "local_available" if default.is_file() else "unavailable"
+
+
 def validate_uploaded_image(
     file_bytes: bytes,
     filename: str,
