@@ -1,5 +1,10 @@
 # Brain Tumor MRI Project — Consolidated Status
 
+> **Current update — 24 October 2026:** The status below was written on 20 October 2026 and remains as a dated record of the pre-training planning/audit stage. It must not be read as the current model status. The researcher subsequently reported completed runs: EfficientNet-B0 accuracy 99.40%, macro-F1 0.993945, weighted-F1 0.994000 on 1,000 test images; BCE U-Net mean Dice 0.799568 / mean IoU 0.718709 on 854 cleaned segmentation pairs; BCE + soft Dice mean Dice 0.799782 / mean IoU 0.716567 on the same pairs. The paired bootstrap reportedly showed no convincing overall BCE + Dice improvement because both 95% confidence intervals included zero. These metrics were supplied by the researcher and have not been independently recomputed in the current hosting environment.
+
+> **Platform implementation update — 24 October 2026:** A feature branch, `feature/online-mri-research-platform`, was created from `research/colab-baseline-2026-10-21`. It adds a checkpoint-aware inference module, private HTTPS retrieval with server-side read-only token and SHA-256 verification, a Streamlit results dashboard, upload validation, a JSON report and inference-contract tests. The actual Google Drive checkpoints are not mounted in this GitHub-connected execution environment. Therefore actual-checkpoint inference, a full test run on the pushed branch, hosting configuration, and live-site smoke test remain unverified. See [online platform deployment](online_platform_deployment.md).
+
+
 **Last updated:** 20 October 2026  
 **Repository:** https://github.com/AbhiDevLab/Brain-Tumor
 
@@ -26,7 +31,7 @@ Prior research already includes CNN transfer-learning classification, U-Net-styl
 
 Use a fixed, leakage-aware held-out evaluation protocol. Primary segmentation target is Dice Similarity Coefficient (DSC), with tumor sensitivity/recall as an important safeguard; also report IoU and false-positive behavior. For classification, report macro-F1 and per-class recall. Retain an improvement only if held-out results support it without unacceptable recall loss or unjustified computational cost.
 
-## Repository implementation published
+## Repository implementation published (as of 20 October 2026)
 
 The repository currently includes:
 - EfficientNet-B0 and U-Net model components.
@@ -41,7 +46,7 @@ The repository currently includes:
 
 Earlier package smoke tests recorded five passing tests, but the current published code's full local test result and the latest GitHub Actions outcome were not yet confirmed in the last project summary. Check these again locally before training.
 
-## What has not yet been demonstrated
+## What had not yet been demonstrated (as recorded on 20 October 2026)
 
 - Current published code's full test suite in the target Windows environment.
 - Streamlit launch.
@@ -52,7 +57,7 @@ Earlier package smoke tests recorded five passing tests, but the current publish
 
 Synthetic tests are not medical-image validation. Do not describe proposed gains as achieved results.
 
-## Immediate next steps (Windows)
+## Immediate next steps recorded in the 20 October 2026 snapshot (historical)
 
 From PowerShell:
 
