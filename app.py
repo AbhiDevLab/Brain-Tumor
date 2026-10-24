@@ -186,6 +186,9 @@ threshold = st.slider(
     step=0.05,
     help="Experimental display threshold. The current baseline is 0.50; this control is not calibrated and does not imply clinical reliability.",
 )
+if st.session_state.get("analysis_threshold") != float(threshold):
+    st.session_state.pop("analysis_result", None)
+    st.session_state["analysis_threshold"] = float(threshold)
 
 if st.button("Run MRI analysis", type="primary", use_container_width=True):
     classification = None
