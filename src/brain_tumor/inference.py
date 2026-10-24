@@ -1,0 +1,395 @@
+from __future__ import annotations
+
+import hashlib
+import io
+import os
+import warnings
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+from PIL import Image, ImageFile, UnidentifiedImageError
+
+from src.brain_tumor.data import classify_image_tensor, segmentation_image_tensor
+from src.brain_tumor.explain import generate_gradcam, overlay_gradcam
+from src.brain_tumor.models import UNet, build_classifier
+
+SUPPORTED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
+SUPPORTED_FORMATS = {"PNG", "JPEG", "BMP", "TIFF"}
+DEFAULT_CLASSIFIER_PATH = Path(__file__).resolve().parents[2] / "artifacts" / "classifier.pt"
+DEFAULT_SEGMENTER_PATH = Path(__file__).resolve().parents[2] / "artifacts" / "segmenter.pt"
+MAX_UPLOAD_BYTES = 12 * 1024 * 1024
+MAX_IMAGE_PIXELS = 25_000_000
+MIN_IMAGE_EDGE = 32
+DEFAULT_MASK_THRESHOLD = 0.5
+# Preliminary UI consistency rules only; not a validated reliability gate.
+SUBSTANTIAL_MASK_FRACTION = 0.05
+NEGLIGIBLE_MASK_FRACTION = 0.001
+EXPECTED_CLASSES = {"glioma", "meningioma", "pituitary", "pituitary_tumor", "no_tumor"}
+
+
+class InputValidationError(ValueError):
+    """An uploaded image failed a safe, user-facing input check."""
+
+
+class CheckpointError(RuntimeError):
+    """A configured model artifact could not be loaded safely."""
+
+
+def configured_checkpoint_path(kind: str) -> Path:
+    """Resolve a server-side path without exposing it to the browser."""
+    if kind == "classifier":
+        env_name, default = "BRAIN_MRI_CLASSIFIER_CHECKPOINT", DEFAULT_CLASSIFIER_PATH
+    elif kind == "segmenter":
+        env_name, default = "BRAIN_MRI_SEGMENTER_CHECKPOINT", DEFAULT_SEGMENTER_PATH
+    else:
+        raise ValueError("kind must be 'classifier' or 'segmenter'")
+    configured = os.environ.get(env_name)
+    return Path(configured).expanduser() if configured else default
+
+
+def validate_uploaded_image(
+    file_bytes: bytes,
+    filename: str,
+    *,
+    max_bytes: int = MAX_UPLOAD_BYTES,
+    max_pixels: int = MAX_IMAGE_PIXELS,
+    min_edge: int = MIN_IMAGE_EDGE,
+) -> tuple[Image.Image, dict[str, Any]]:
+    """Validate extension, byte size, content format, decode and dimensions.
+
+    The returned RGB image stays in memory. This function never writes the upload
+    to disk and does not retain the supplied filename in its return metadata.
+    """
+    suffix = Path(filename or "").suffix.lower()
+    if suffix not in SUPPORTED_EXTENSIONS:
+        raise InputValidationError("Unsupported file type. Upload PNG, JPG/JPEG, BMP, or TIFF.")
+    if not file_bytes:
+        raise InputValidationError("The uploaded file is empty.")
+    if len(file_bytes) > max_bytes:
+        raise InputValidationError("The image exceeds the 12 MB upload limit.")
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(file_bytes)) as probe:
+                actual_format = (probe.format or "").upper()
+                width, height = probe.size
+                if actual_format not in SUPPORTED_FORMATS:
+                    raise InputValidationError("The file contents are not a supported image format.")
+                extension_formats = {
+                    ".png": {"PNG"}, ".jpg": {"JPEG"}, ".jpeg": {"JPEG"},
+                    ".bmp": {"BMP"}, ".tif": {"TIFF"}, ".tiff": {"TIFF"},
+                }
+                if actual_format not in extension_formats[suffix]:
+                    raise InputValidationError("The file extension does not match its image content.")
+                if width < min_edge or height < min_edge:
+                    raise InputValidationError(f"Image dimensions must be at least {min_edge} × {min_edge} pixels.")
+                if width * height > max_pixels:
+                    raise InputValidationError("The image dimensions exceed the supported pixel limit.")
+                # Verify decodability without relying on file headers alone.
+                probe.verify()
+            with Image.open(io.BytesIO(file_bytes)) as decoded:
+                decoded.seek(0)  # TIFF inputs use the first 2D frame only.
+                decoded.load()
+                rgb = decoded.convert("RGB").copy()
+    except InputValidationError:
+        raise
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError,
+            Image.DecompressionBombWarning) as exc:
+        raise InputValidationError("The image is corrupted, malformed, or could not be decoded.") from exc
+
+    array = np.asarray(rgb, dtype=np.uint8)
+    info = {
+        "width_px": int(width),
+        "height_px": int(height),
+        "channels": 3,
+        "format": actual_format,
+        "file_bytes": len(file_bytes),
+        "mean_intensity_0_to_255": round(float(array.mean()), 2),
+        "intensity_std_0_to_255": round(float(array.std()), 2),
+    }
+    return rgb, info
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _read_checkpoint(path: str | Path, expected_architecture: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    checkpoint_path = Path(path).expanduser()
+    if not checkpoint_path.is_file():
+        raise CheckpointError(f"The configured {expected_architecture} checkpoint is missing or inaccessible.")
+    try:
+        digest = _sha256(checkpoint_path)
+        # These are the repository's own trusted training artifacts. Latest recovery
+        # checkpoints contain RNG state objects, so weights_only=False is required.
+        payload = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    except Exception as exc:
+        raise CheckpointError(f"The configured {expected_architecture} checkpoint is corrupt or unreadable.") from exc
+
+    if not isinstance(payload, dict) or not isinstance(payload.get("model_state_dict"), dict):
+        raise CheckpointError(f"The configured {expected_architecture} checkpoint has an unsupported format.")
+    declared_architecture = payload.get("architecture")
+    if declared_architecture is not None and declared_architecture != expected_architecture:
+        raise CheckpointError(f"The checkpoint architecture is incompatible with {expected_architecture}.")
+    meta = {
+        "checkpoint_name": checkpoint_path.name,
+        "sha256": digest,
+        "architecture": expected_architecture,
+        "image_size": payload.get("image_size"),
+        "checkpoint_metadata_architecture": declared_architecture,
+    }
+    return payload, meta
+
+
+def load_classifier_checkpoint(
+    path: str | Path, device: torch.device | str = "cpu"
+) -> tuple[torch.nn.Module, dict[str, Any]]:
+    payload, meta = _read_checkpoint(path, "efficientnet_b0")
+    classes = payload.get("classes")
+    if (
+        not isinstance(classes, (list, tuple))
+        or len(classes) != 4
+        or not all(isinstance(name, str) and name.strip() for name in classes)
+        or len({name.lower().strip() for name in classes}) != len(classes)
+    ):
+        raise CheckpointError("The classifier checkpoint must declare four unique class labels.")
+    normalized = {name.lower().replace(" ", "_").strip() for name in classes}
+    if not normalized.issubset(EXPECTED_CLASSES):
+        raise CheckpointError("The classifier checkpoint contains unexpected class labels.")
+    image_size = payload.get("image_size", 224)
+    if not isinstance(image_size, int) or not 32 <= image_size <= 1024:
+        raise CheckpointError("The classifier checkpoint declares an invalid input size.")
+    try:
+        model = build_classifier(num_classes=len(classes), pretrained=False)
+        model.load_state_dict(payload["model_state_dict"], strict=True)
+        model.to(device)
+        model.eval()
+    except Exception as exc:
+        raise CheckpointError("The classifier checkpoint weights do not match the repository model.") from exc
+    meta.update({"image_size": image_size, "classes": list(classes)})
+    return model, meta
+
+
+def load_segmenter_checkpoint(
+    path: str | Path, device: torch.device | str = "cpu"
+) -> tuple[torch.nn.Module, dict[str, Any]]:
+    payload, meta = _read_checkpoint(path, "unet_binary")
+    image_size = payload.get("image_size", 256)
+    if not isinstance(image_size, int) or not 32 <= image_size <= 1024:
+        raise CheckpointError("The segmenter checkpoint declares an invalid input size.")
+    try:
+        model = UNet()
+        model.load_state_dict(payload["model_state_dict"], strict=True)
+        model.to(device)
+        model.eval()
+    except Exception as exc:
+        raise CheckpointError("The segmenter checkpoint weights do not match the repository model.") from exc
+    meta.update({
+        "image_size": image_size,
+        "loss_mode": payload.get("loss_mode", "unspecified"),
+        "threshold_default": DEFAULT_MASK_THRESHOLD,
+    })
+    return model, meta
+
+
+def predict_classification(
+    model: torch.nn.Module,
+    image: Image.Image,
+    metadata: dict[str, Any],
+    device: torch.device | str,
+    *,
+    include_gradcam: bool = True,
+) -> dict[str, Any]:
+    classes = metadata["classes"]
+    size = int(metadata["image_size"])
+    tensor = classify_image_tensor(image, size).to(device)
+    with torch.inference_mode():
+        logits = model(tensor)
+        if logits.ndim != 2 or logits.shape != (1, len(classes)):
+            raise RuntimeError("Classifier returned an unexpected output shape.")
+        scores = torch.softmax(logits, dim=1)[0].detach().cpu().numpy()
+    order = np.argsort(scores)[::-1]
+    result: dict[str, Any] = {
+        "predicted_class": classes[int(order[0])],
+        "score_not_calibrated_probability": float(scores[int(order[0])]),
+        "scores_not_calibrated_probabilities": {
+            classes[index]: float(scores[index]) for index in range(len(classes))
+        },
+        "input_tensor_shape": [1, 3, size, size],
+        "checkpoint_name": metadata["checkpoint_name"],
+        "checkpoint_sha256": metadata["sha256"],
+        "architecture": metadata["architecture"],
+        "image_size": size,
+    }
+    if include_gradcam:
+        try:
+            cam = generate_gradcam(model, tensor, int(order[0]), output_size=(size, size))
+            result["gradcam_overlay"] = overlay_gradcam(image, cam)
+            result["gradcam_status"] = "generated"
+        except Exception:
+            # The classification prediction remains valid when attribution
+            # visualization fails; never mislabel a segmentation mask as Grad-CAM.
+            result["gradcam_overlay"] = None
+            result["gradcam_status"] = "unavailable"
+    return result
+
+
+def predict_segmentation(
+    model: torch.nn.Module,
+    image: Image.Image,
+    metadata: dict[str, Any],
+    device: torch.device | str,
+    *,
+    threshold: float = DEFAULT_MASK_THRESHOLD,
+) -> dict[str, Any]:
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("Segmentation threshold must be between 0 and 1.")
+    size = int(metadata["image_size"])
+    tensor = segmentation_image_tensor(image, size).to(device)
+    with torch.inference_mode():
+        logits = model(tensor)
+        if logits.ndim != 4 or logits.shape[:2] != (1, 1):
+            raise RuntimeError("Segmenter returned an unexpected output shape.")
+        probabilities = torch.sigmoid(logits)[0, 0].detach().cpu().numpy()
+    if probabilities.shape != (size, size):
+        raise RuntimeError("Segmenter output dimensions do not match its configured input size.")
+    native_mask = (probabilities >= threshold).astype(np.uint8)
+    mask_image = Image.fromarray(native_mask * 255, mode="L")
+    display_mask = mask_image.resize(image.size, Image.Resampling.NEAREST)
+    mask_display_array = np.asarray(display_mask, dtype=np.uint8) > 0
+    original_array = np.asarray(image.convert("RGB"), dtype=np.uint8)
+    overlay = original_array.copy()
+    tint = np.array([255, 48, 48], dtype=np.float32)
+    overlay[mask_display_array] = (
+        original_array[mask_display_array].astype(np.float32) * 0.60 + tint * 0.40
+    ).astype(np.uint8)
+    fraction = float(native_mask.mean())
+    return {
+        "mask_native": native_mask,
+        "mask_display": display_mask,
+        "overlay": Image.fromarray(overlay, mode="RGB"),
+        "predicted_foreground_pixels": int(native_mask.sum()),
+        "foreground_pixel_fraction": fraction,
+        "threshold": float(threshold),
+        "output_grid_size_px": [size, size],
+        "display_size_px": [image.width, image.height],
+        "checkpoint_name": metadata["checkpoint_name"],
+        "checkpoint_sha256": metadata["sha256"],
+        "architecture": metadata["architecture"],
+        "loss_mode": metadata.get("loss_mode", "unspecified"),
+    }
+
+
+def _canonical_label(label: str) -> str:
+    return label.lower().strip().replace(" ", "_").replace("-", "_")
+
+
+def preliminary_consistency_flags(
+    predicted_class: str | None,
+    foreground_fraction: float | None,
+    *,
+    substantial_fraction: float = SUBSTANTIAL_MASK_FRACTION,
+    negligible_fraction: float = NEGLIGIBLE_MASK_FRACTION,
+) -> list[dict[str, str]]:
+    """Apply simple, unvalidated consistency flags without hiding either output."""
+    if predicted_class is None or foreground_fraction is None:
+        return [{
+            "level": "review",
+            "code": "incomplete_model_outputs",
+            "message": "One or more model outputs are unavailable; combined review is incomplete.",
+        }]
+    label = _canonical_label(predicted_class)
+    no_tumor = label in {"no_tumor", "notumor", "no_tumour", "none"}
+    if no_tumor and foreground_fraction >= substantial_fraction:
+        return [{
+            "level": "review",
+            "code": "classifier_segmenter_disagreement",
+            "message": "The classifier predicts no_tumor while the segmentation mask covers at least 5% of its output grid.",
+        }]
+    if not no_tumor and foreground_fraction <= negligible_fraction:
+        return [{
+            "level": "review",
+            "code": "classifier_segmenter_disagreement",
+            "message": "The classifier predicts a tumor category while the segmentation mask covers at most 0.1% of its output grid.",
+        }]
+    return [{
+        "level": "info",
+        "code": "preliminary_checks_no_flag",
+        "message": "The preliminary size-based consistency rules did not flag this pair of outputs; this is not evidence of reliability.",
+    }]
+
+
+def input_quality_flags(image: Image.Image) -> list[dict[str, str]]:
+    arr = np.asarray(image.convert("RGB"), dtype=np.uint8)
+    flags: list[dict[str, str]] = []
+    if min(image.size) < 64:
+        flags.append({
+            "level": "review",
+            "code": "small_input_dimensions",
+            "message": "The image is unusually small for this workflow; inspect input quality before interpreting model outputs.",
+        })
+    if float(arr.std()) < 2.0:
+        flags.append({
+            "level": "review",
+            "code": "near_uniform_intensity",
+            "message": "The image has near-uniform pixel intensity and may not be suitable for meaningful assessment.",
+        })
+    return flags
+
+
+def build_result_report(
+    *,
+    input_metadata: dict[str, Any],
+    classification: dict[str, Any] | None,
+    segmentation: dict[str, Any] | None,
+    flags: list[dict[str, str]],
+    errors: list[str],
+    threshold: float = DEFAULT_MASK_THRESHOLD,
+) -> dict[str, Any]:
+    """Build a non-identifying JSON-ready summary, excluding input filenames and pixels."""
+    classification_report = None
+    if classification is not None:
+        classification_report = {
+            key: value for key, value in classification.items()
+            if key not in {"gradcam_overlay"}
+        }
+    segmentation_report = None
+    if segmentation is not None:
+        segmentation_report = {
+            "predicted_foreground_pixels": segmentation["predicted_foreground_pixels"],
+            "foreground_pixel_fraction": segmentation["foreground_pixel_fraction"],
+            "threshold": segmentation["threshold"],
+            "output_grid_size_px": segmentation["output_grid_size_px"],
+            "display_size_px": segmentation["display_size_px"],
+            "checkpoint_name": segmentation["checkpoint_name"],
+            "checkpoint_sha256": segmentation["checkpoint_sha256"],
+            "architecture": segmentation["architecture"],
+            "loss_mode": segmentation["loss_mode"],
+        }
+    return {
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "research_only": True,
+        "input": {
+            "width_px": input_metadata["width_px"],
+            "height_px": input_metadata["height_px"],
+            "format": input_metadata["format"],
+            "file_bytes": input_metadata["file_bytes"],
+        },
+        "classification": classification_report,
+        "segmentation": segmentation_report,
+        "segmentation_threshold": float(threshold),
+        "review_flags": flags,
+        "inference_errors": list(errors),
+        "disclaimer": (
+            "Research and education only. These models are not clinically validated. "
+            "Predictions can be wrong and must not guide medical decisions or treatment. "
+            "Have MRI studies reviewed by qualified medical professionals."
+        ),
+    }
