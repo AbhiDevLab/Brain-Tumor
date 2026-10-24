@@ -46,6 +46,191 @@ class CheckpointError(RuntimeError):
 
 MAX_REMOTE_ARTIFACT_BYTES = 2 * 1024 * 1024 * 1024
 
+# Immutable IDs and integrity metadata discovered from the private draft release
+# baseline-checkpoints-2026-10-21 (release ID 418777578).
+GITHUB_RELEASE_REPO = "AbhiDevLab/Brain-Tumor"
+GITHUB_RELEASE_ASSETS: dict[str, dict[str, Any]] = {
+    "classifier": {
+        "asset_id": 660318425,
+        "name": "efficientnet_b0_best_20261020T192345Z.pt",
+        "size_bytes": 16_364_125,
+        "sha256": "c0775f865d8a4811f10b50818fb44ce62d8b08c1ecb366cf317f8242eb38f9d8",
+        "architecture": "efficientnet_b0",
+    },
+    "segmenter": {
+        "asset_id": 660464605,
+        "name": "unet_bce_best_20261020T195800Z.pt",
+        "size_bytes": 7_754_627,
+        "sha256": "7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357",
+        "architecture": "unet_binary",
+    },
+    "segmenter_bce_dice": {
+        "asset_id": 661318090,
+        "name": "unet_bce_dice_best_20261020T205900Z.pt",
+        "size_bytes": 7_756_333,
+        "sha256": "346c701760b56d27def9d779f2d6e96f740579454fcc8a2db623ccfc28edc008",
+        "architecture": "unet_binary",
+    },
+}
+GITHUB_ASSET_REDIRECT_HOSTS = {
+    "release-assets.githubusercontent.com",
+    "objects.githubusercontent.com",
+}
+
+
+def _allowed_github_asset_redirect(host: str) -> bool:
+    """Permit GitHub's documented release CDN and its release-specific S3 host."""
+    if host in GITHUB_ASSET_REDIRECT_HOSTS:
+        return True
+    return bool(re.fullmatch(
+        r"github-production-release-asset-[a-z0-9-]+\\.s3\\.amazonaws\\.com",
+        host.lower(),
+    ))
+
+
+def _download_github_release_asset(
+    kind: str,
+    token: str,
+    *,
+    cache_dir: str | Path | None = None,
+) -> Path:
+    """Fetch one pinned private Release asset without forwarding auth on redirects.
+
+    The API request is authenticated at api.github.com with a read-only token.
+    Every redirect is followed manually; redirect hosts are allow-listed, and
+    subsequent requests contain no Authorization header. Bytes are cached only
+    after the asset size and pinned SHA-256 match the release metadata.
+    """
+    if kind not in GITHUB_RELEASE_ASSETS:
+        raise ValueError("Unsupported GitHub release model kind.")
+    if not token or not token.strip():
+        raise CheckpointError("Private GitHub model access requires a server-side read-only token.")
+
+    asset = GITHUB_RELEASE_ASSETS[kind]
+    expected_sha256 = asset["sha256"]
+    expected_size = int(asset["size_bytes"])
+    asset_id = int(asset["asset_id"])
+    api_url = (
+        f"https://api.github.com/repos/{GITHUB_RELEASE_REPO}"
+        f"/releases/assets/{asset_id}"
+    )
+    root = Path(cache_dir or os.environ.get(
+        "BRAIN_MRI_MODEL_CACHE_DIR",
+        str(Path(tempfile.gettempdir()) / "brain-mri-model-artifacts"),
+    )).expanduser()
+
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        try:
+            root.chmod(0o700)
+        except OSError:
+            pass
+        destination = root / asset["name"]
+        if destination.is_file() and _sha256(destination) == expected_sha256:
+            return destination
+        if destination.exists():
+            destination.unlink()
+
+        class _RejectRedirects(HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+
+        opener = build_opener(_RejectRedirects)
+        current_url = api_url
+        authenticated_request = True
+        temp_path: Path | None = None
+        response = None
+        for _redirect_count in range(4):
+            try:
+                parsed = urlparse(current_url)
+            except ValueError as exc:
+                raise CheckpointError("The GitHub release asset URL is invalid.") from exc
+            host = (parsed.hostname or "").lower()
+            if parsed.scheme != "https" or parsed.username or parsed.password or parsed.fragment:
+                raise CheckpointError("GitHub supplied an unsafe release asset URL.")
+            if authenticated_request:
+                if host != "api.github.com" or parsed.query:
+                    raise CheckpointError("The private GitHub asset API endpoint is invalid.")
+            elif not _allowed_github_asset_redirect(host):
+                raise CheckpointError("GitHub supplied an unapproved release asset redirect host.")
+
+            headers = {
+                "Accept": "application/octet-stream",
+                "User-Agent": "BrainTumorMRIResearch/1.0",
+            }
+            if authenticated_request:
+                headers["Authorization"] = f"Bearer {token}"
+                headers["X-GitHub-Api-Version"] = "2022-11-28"
+            request = Request(current_url, headers=headers, method="GET")
+            try:
+                response = opener.open(request, timeout=90)
+                final_url = urlparse(response.geturl())
+                final_host = (final_url.hostname or "").lower()
+                if final_url.scheme != "https" or final_host != host or final_url.username or final_url.password:
+                    response.close()
+                    raise CheckpointError("The GitHub release asset response URL did not match its validated host.")
+                break
+            except HTTPError as exc:
+                status = int(exc.code)
+                location = exc.headers.get("Location") if exc.headers else None
+                exc.close()
+                if status not in {301, 302, 303, 307, 308} or not location:
+                    raise CheckpointError("The private GitHub release asset request failed.")
+                current_url = __import__("urllib.parse", fromlist=["urljoin"]).urljoin(current_url, location)
+                # All following requests are unauthenticated, including cross-host redirects.
+                authenticated_request = False
+        else:
+            raise CheckpointError("The GitHub release asset redirected too many times.")
+
+        try:
+            content_type = (response.headers.get("Content-Type") or "").lower()
+            if "application/json" in content_type:
+                raise CheckpointError("GitHub returned asset metadata instead of binary checkpoint bytes.")
+            advertised_size = response.headers.get("Content-Length")
+            if advertised_size:
+                try:
+                    if int(advertised_size) != expected_size:
+                        raise CheckpointError("The downloaded GitHub asset size does not match the pinned release metadata.")
+                except ValueError as exc:
+                    raise CheckpointError("The GitHub release asset size header is invalid.") from exc
+
+            with tempfile.NamedTemporaryFile(
+                mode="wb", prefix=f".{kind}-", suffix=".download",
+                dir=root, delete=False,
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
+                byte_count = 0
+                digest = hashlib.sha256()
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    byte_count += len(chunk)
+                    if byte_count > MAX_REMOTE_ARTIFACT_BYTES or byte_count > expected_size:
+                        raise CheckpointError("The private GitHub model asset exceeds its expected size.")
+                    digest.update(chunk)
+                    temp_file.write(chunk)
+
+            if byte_count != expected_size:
+                raise CheckpointError("The downloaded GitHub asset size does not match the pinned release metadata.")
+            if digest.hexdigest() != expected_sha256:
+                raise CheckpointError("The downloaded GitHub asset failed its SHA-256 integrity check.")
+            try:
+                temp_path.chmod(0o600)
+            except OSError:
+                pass
+            temp_path.replace(destination)
+            return destination
+        finally:
+            response.close()
+            if temp_path is not None and temp_path.exists():
+                temp_path.unlink()
+    except CheckpointError:
+        raise
+    except (HTTPError, URLError, OSError, ValueError) as exc:
+        # Never include the token, signed redirect URL, response body, or local path in an error.
+        raise CheckpointError(f"The private GitHub {kind} checkpoint could not be retrieved.") from exc
+
 
 def _download_private_artifact(kind: str, url: str, token: str, expected_sha256: str) -> Path:
     """Download a private checkpoint over HTTPS into an ephemeral server-side cache.
@@ -133,12 +318,11 @@ def _download_private_artifact(kind: str, url: str, token: str, expected_sha256:
 
 @lru_cache(maxsize=2)
 def configured_checkpoint_path(kind: str) -> Path:
-    """Resolve a server-side file path or securely retrieve a private artifact.
+    """Resolve local files, explicit private HTTPS endpoints, or the pinned GitHub Release.
 
-    Configure one of BRAIN_MRI_<KIND>_CHECKPOINT (local/mounted file), or
-    BRAIN_MRI_<KIND>_URL, *_TOKEN and *_SHA256 (private HTTPS artifact).
-    The artifact resolution is cached for the process; restart the app after
-    changing hosting secrets.
+    Priority: per-model local path, explicit HTTPS endpoint, authenticated GitHub
+    Release asset (when BRAIN_MRI_GITHUB_TOKEN is configured), then the local
+    generic path for clear missing-checkpoint handling. Restart after changing secrets.
     """
     if kind == "classifier":
         prefix, default = "BRAIN_MRI_CLASSIFIER", DEFAULT_CLASSIFIER_PATH
@@ -150,21 +334,24 @@ def configured_checkpoint_path(kind: str) -> Path:
     if configured:
         return Path(configured).expanduser()
     url = os.environ.get(f"{prefix}_URL")
-    if not url:
-        return default
-    return _download_private_artifact(
-        kind,
-        url,
-        os.environ.get(f"{prefix}_TOKEN", ""),
-        os.environ.get(f"{prefix}_SHA256", ""),
-    )
+    if url:
+        return _download_private_artifact(
+            kind,
+            url,
+            os.environ.get(f"{prefix}_TOKEN", ""),
+            os.environ.get(f"{prefix}_SHA256", ""),
+        )
+    github_token = os.environ.get("BRAIN_MRI_GITHUB_TOKEN", "")
+    if github_token:
+        return _download_github_release_asset(kind, github_token)
+    return default
 
 
 def checkpoint_source_status(kind: str) -> str:
-    """Describe checkpoint configuration without triggering any network download.
+    """Describe configuration without triggering downloads or revealing paths/tokens.
 
-    Returns one of: local_available, local_missing, private_configured,
-    private_incomplete, or unavailable. No path, URL, or token is returned.
+    States: local_available, local_missing, private_configured, private_incomplete,
+    github_configured, or unavailable.
     """
     if kind == "classifier":
         prefix, default = "BRAIN_MRI_CLASSIFIER", DEFAULT_CLASSIFIER_PATH
@@ -190,6 +377,8 @@ def checkpoint_source_status(kind: str) -> str:
             url_valid = False
         complete = url_valid and bool(token) and bool(re.fullmatch(r"[0-9a-fA-F]{64}", checksum))
         return "private_configured" if complete else "private_incomplete"
+    if os.environ.get("BRAIN_MRI_GITHUB_TOKEN", "").strip():
+        return "github_configured"
     return "local_available" if default.is_file() else "unavailable"
 
 
