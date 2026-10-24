@@ -83,7 +83,7 @@ def _allowed_github_asset_redirect(host: str) -> bool:
     if host in GITHUB_ASSET_REDIRECT_HOSTS:
         return True
     return bool(re.fullmatch(
-        r"github-production-release-asset-[a-z0-9-]+\\.s3\\.amazonaws\\.com",
+        r"github-production-release-asset-[a-z0-9-]+\.s3\.amazonaws\.com",
         host.lower(),
     ))
 
