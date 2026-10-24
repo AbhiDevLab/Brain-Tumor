@@ -1,0 +1,18 @@
+[server]
+maxUploadSize = 12
+enableXsrfProtection = true
+showEmailPrompt = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = false
+
+[theme]
+base = "light"
+primaryColor = "#176B87"
+backgroundColor = "#F7FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#163246"
+font = "sans serif"
