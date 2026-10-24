@@ -63,12 +63,20 @@ def main() -> None:
 
     classifier, classifier_meta = load_classifier_checkpoint(classifier_path, device)
     segmenter, segmenter_meta = load_segmenter_checkpoint(segmenter_path, device)
+    comparison_path = configured_checkpoint_path("segmenter_bce_dice")
+    comparison_expected = GITHUB_RELEASE_ASSETS["segmenter_bce_dice"]["sha256"]
+    assert _sha256(comparison_path) == comparison_expected, "BCE + Dice checkpoint SHA-256 mismatch"
+    comparison_model, comparison_meta = load_segmenter_checkpoint(comparison_path, device)
+
     assert classifier_meta["sha256"] == classifier_expected
     assert segmenter_meta["sha256"] == segmenter_expected
+    assert comparison_meta["sha256"] == comparison_expected
     assert classifier_meta["checkpoint_name"] == GITHUB_RELEASE_ASSETS["classifier"]["name"]
     assert segmenter_meta["checkpoint_name"] == GITHUB_RELEASE_ASSETS["segmenter"]["name"]
+    assert comparison_meta["checkpoint_name"] == GITHUB_RELEASE_ASSETS["segmenter_bce_dice"]["name"]
     assert len(classifier_meta["classes"]) == 4
     assert segmenter_meta["loss_mode"] == "bce"
+    assert comparison_meta["loss_mode"] == "bce_dice"
 
     image, input_metadata, _payload = make_software_smoke_input()
     classification = predict_classification(
@@ -90,6 +98,15 @@ def main() -> None:
     assert segmentation["overlay"].size == image.size
     assert segmentation["checkpoint_sha256"] == segmenter_expected
     assert segmentation["loss_mode"] == "bce"
+
+    comparison_segmentation = predict_segmentation(
+        comparison_model, image, comparison_meta, device, threshold=0.5
+    )
+    assert comparison_segmentation["checkpoint_sha256"] == comparison_expected
+    assert set(np.unique(comparison_segmentation["mask_native"])).issubset({0, 1})
+    assert comparison_segmentation["mask_display"].size == image.size
+    assert comparison_segmentation["overlay"].size == image.size
+    assert comparison_segmentation["loss_mode"] == "bce_dice"
 
     flags = input_quality_flags(image)
     flags.extend(preliminary_consistency_flags(
@@ -115,8 +132,10 @@ def main() -> None:
     print("REAL_CHECKPOINT_SMOKE=PASS")
     print(f"CLASSIFIER_SHA256={classifier_expected}")
     print(f"BCE_UNET_SHA256={segmenter_expected}")
+    print(f"BCE_DICE_UNET_SHA256={comparison_expected}")
     print("CLASSIFIER_OUTPUT=valid_four_class_scores_and_gradcam")
     print("SEGMENTATION_OUTPUT=valid_binary_mask_and_aligned_overlay")
+    print("COMPARISON_OUTPUT=valid_optional_bce_dice_mask_and_overlay")
     print("REPORT_OUTPUT=json_serialization_passed")
     print("INPUT_KIND=synthetic_software_test_pattern_not_an_MRI")
     print("MEDICAL_PERFORMANCE_CLAIM=none")
