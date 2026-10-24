@@ -175,3 +175,95 @@ def test_report_is_json_ready_and_does_not_include_uploaded_filename():
     assert report["segmentation"] is None
     assert report["research_only"] is True
     assert "not been clinically validated" in report["disclaimer"]
+
+
+
+def test_private_artifact_download_uses_checksum_and_reuses_verified_cache(tmp_path, monkeypatch):
+    import io
+
+    payload = b"research-checkpoint-bytes"
+    expected = hashlib.sha256(payload).hexdigest()
+    cache_dir = tmp_path / "private-cache"
+    monkeypatch.setenv("BRAIN_MRI_MODEL_CACHE_DIR", str(cache_dir))
+
+    class FakeResponse(io.BytesIO):
+        headers = {"Content-Length": str(len(payload))}
+
+        def geturl(self):
+            return "https://artifacts.example.org/models/classifier.pt"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+
+    calls = {"count": 0}
+
+    def fake_open(request, timeout):
+        calls["count"] += 1
+        assert request.get_header("Authorization") == "Bearer read-only-token"
+        assert timeout == 90
+        return FakeResponse(payload)
+
+    monkeypatch.setattr(inference, "build_opener", lambda handler: type(
+        "FakeOpener", (), {"open": staticmethod(fake_open)}
+    )())
+    artifact = inference._download_private_artifact(
+        "classifier",
+        "https://artifacts.example.org/models/classifier.pt",
+        "read-only-token",
+        expected,
+    )
+    assert artifact.read_bytes() == payload
+    assert inference._download_private_artifact(
+        "classifier",
+        "https://artifacts.example.org/models/classifier.pt",
+        "read-only-token",
+        expected,
+    ) == artifact
+    assert calls["count"] == 1
+
+
+@pytest.mark.parametrize(
+    ("url", "token", "checksum"),
+    [
+        ("http://artifacts.example.org/model.pt", "read-only-token", "a" * 64),
+        ("https://artifacts.example.org/model.pt?token=embedded", "read-only-token", "a" * 64),
+        ("https://artifacts.example.org/model.pt", "", "a" * 64),
+        ("https://artifacts.example.org/model.pt", "read-only-token", "not-a-checksum"),
+    ],
+)
+def test_private_artifact_download_rejects_insecure_configuration(url, token, checksum):
+    with pytest.raises(inference.CheckpointError):
+        inference._download_private_artifact("classifier", url, token, checksum)
+
+
+def test_private_artifact_checksum_mismatch_fails_closed(tmp_path, monkeypatch):
+    import io
+
+    monkeypatch.setenv("BRAIN_MRI_MODEL_CACHE_DIR", str(tmp_path / "cache"))
+    payload = b"not-the-expected-checkpoint"
+
+    class FakeResponse(io.BytesIO):
+        headers = {"Content-Length": str(len(payload))}
+
+        def geturl(self):
+            return "https://artifacts.example.org/models/model.pt"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+
+    monkeypatch.setattr(inference, "build_opener", lambda handler: type(
+        "FakeOpener", (), {"open": staticmethod(lambda request, timeout: FakeResponse(payload))}
+    )())
+    with pytest.raises(inference.CheckpointError, match="SHA-256 integrity check"):
+        inference._download_private_artifact(
+            "classifier",
+            "https://artifacts.example.org/models/model.pt",
+            "read-only-token",
+            hashlib.sha256(b"different bytes").hexdigest(),
+        )
