@@ -8,7 +8,7 @@ import tempfile
 import warnings
 from functools import lru_cache
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from datetime import datetime, timezone
 from pathlib import Path
@@ -176,7 +176,7 @@ def _download_github_release_asset(
                 exc.close()
                 if status not in {301, 302, 303, 307, 308} or not location:
                     raise CheckpointError("The private GitHub release asset request failed.")
-                current_url = __import__("urllib.parse", fromlist=["urljoin"]).urljoin(current_url, location)
+                current_url = urljoin(current_url, location)
                 # All following requests are unauthenticated, including cross-host redirects.
                 authenticated_request = False
         else:
