@@ -70,7 +70,13 @@ The API returned these three best-asset IDs, names, sizes and SHA-256 digests; e
    BRAIN_MRI_GITHUB_TOKEN = "YOUR_FINE_GRAINED_READ_ONLY_TOKEN"
    ```
 3. Save the secret and restart/redeploy the app. When a user requests inference, it downloads the required best checkpoints, validates the response size and SHA-256, and then passes them to the existing strict model loaders.
-4. For GitHub Actions, the dedicated smoke-test job uses its short-lived repository `GITHUB_TOKEN` with `contents: read`; this token is not exposed to the Streamlit browser or included in the application output.
+4. Add the same token as a GitHub repository Actions secret: open `AbhiDevLab/Brain-Tumor → Settings → Secrets and variables → Actions → New repository secret`, name it `BRAIN_MRI_GITHUB_TOKEN`, and paste the value there. The smoke job reads that secret through its server-side environment; it is never printed.
+5. Restart/re-run the workflow and confirm the real-checkpoint smoke job reports successful SHA-256 verification, strict model loading, four classifier scores, Grad-CAM generation, a binary mask and an aligned overlay.
+6. Check the live URL in a separate browser session. A private GitHub repository and a private Streamlit app are separate settings; make the app public or explicitly invite viewers depending on your sharing choice.
+
+
+
+**Why a separate token is needed for the draft release:** the first real-checkpoint CI attempt reached the private asset API but its built-in workflow `GITHUB_TOKEN` received HTTP 403. GitHub documents that only actors with push access can list draft releases; the read-only workflow token was not enough to access this draft asset. Keep the artifact private; use the repository-scoped fine-grained token for an account that can access the draft release, with the token itself limited to **Contents: Read-only**. See [GitHub release listing permissions](https://docs.github.com/en/rest/releases/releases#list-releases) and [Get a release asset](https://docs.github.com/en/rest/releases/assets#get-a-release-asset). No model upload to a separate provider is required.
 
 #### Redirect and integrity handling
 
