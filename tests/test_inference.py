@@ -174,7 +174,7 @@ def test_report_is_json_ready_and_does_not_include_uploaded_filename():
     assert report["classification"] is None
     assert report["segmentation"] is None
     assert report["research_only"] is True
-    assert "not been clinically validated" in report["disclaimer"]
+    assert "not clinically validated" in report["disclaimer"]
 
 
 
