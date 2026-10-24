@@ -3,8 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from pathlib import Path
-
 import streamlit as st
 import torch
 
@@ -13,6 +11,7 @@ from src.brain_tumor.inference import (
     CheckpointError,
     InputValidationError,
     build_result_report,
+    checkpoint_source_status,
     configured_checkpoint_path,
     input_quality_flags,
     load_classifier_checkpoint,
@@ -94,17 +93,16 @@ for _secret_key in _SECRET_KEYS:
 
 device_name = "cuda" if torch.cuda.is_available() else "cpu"
 device = torch.device(device_name)
-artifact_setup_errors: dict[str, str] = {}
-try:
-    classifier_path = configured_checkpoint_path("classifier")
-except CheckpointError:
-    classifier_path = None
-    artifact_setup_errors["classifier"] = "The private classifier artifact could not be retrieved. Check its server-side URL, read-only token, and SHA-256 checksum."
-try:
-    segmenter_path = configured_checkpoint_path("segmenter")
-except CheckpointError:
-    segmenter_path = None
-    artifact_setup_errors["segmenter"] = "The private segmentation artifact could not be retrieved. Check its server-side URL, read-only token, and SHA-256 checksum."
+# Report configuration without downloading potentially large private files on page load.
+checkpoint_status_labels = {
+    "local_available": "Server-side checkpoint available",
+    "local_missing": "Configured local checkpoint unavailable",
+    "private_configured": "Private artifact configured; retrieval starts when analysis runs",
+    "private_incomplete": "Private artifact settings incomplete or invalid",
+    "unavailable": "Checkpoint unavailable",
+}
+classifier_source_status = checkpoint_source_status("classifier")
+segmenter_source_status = checkpoint_source_status("segmenter")
 
 
 @st.cache_resource(show_spinner=False)
@@ -122,11 +120,11 @@ with st.expander("Model availability", expanded=False):
     a, b = st.columns(2)
     with a:
         st.markdown("**EfficientNet-B0 classifier**")
-        st.write("Configured checkpoint found" if classifier_path and classifier_path.is_file() else "Checkpoint unavailable")
+        st.write(checkpoint_status_labels[classifier_source_status])
         st.caption("Expected output: glioma, meningioma, pituitary tumor, or no tumor.")
     with b:
         st.markdown("**Segmentation model (BCE U-Net default)**")
-        st.write("Configured checkpoint found" if segmenter_path and segmenter_path.is_file() else "Checkpoint unavailable")
+        st.write(checkpoint_status_labels[segmenter_source_status])
         st.caption("Default threshold: 0.50. The BCE + Dice experiment is not the default.")
     st.caption(f"Inference device: {'CUDA GPU' if device_name == 'cuda' else 'CPU'}.")
 
@@ -198,28 +196,26 @@ if st.button("Run MRI analysis", type="primary", use_container_width=True):
     segmentation = None
     errors: list[str] = []
     with st.spinner("Loading available checkpoints and running inference…"):
-        if "classifier" in artifact_setup_errors:
-            errors.append(artifact_setup_errors["classifier"])
-        elif not classifier_path or not classifier_path.is_file():
-            errors.append("Classifier checkpoint is unavailable. Configure BRAIN_MRI_CLASSIFIER_CHECKPOINT or the private classifier artifact settings on the server.")
-        else:
-            try:
+        try:
+            classifier_path = configured_checkpoint_path("classifier")
+            if not classifier_path.is_file():
+                errors.append("Classifier checkpoint is unavailable. Configure BRAIN_MRI_CLASSIFIER_CHECKPOINT or the private classifier artifact settings on the server.")
+            else:
                 stat = classifier_path.stat()
                 classifier, classifier_meta = cached_classifier(
                     str(classifier_path), stat.st_mtime_ns, stat.st_size, device_name
                 )
                 classification = predict_classification(classifier, original, classifier_meta, device)
-            except CheckpointError:
-                errors.append("The classifier checkpoint could not be loaded. Check that the configured server-side artifact is valid and matches this repository's model architecture.")
-            except Exception:
-                errors.append("Classifier inference failed. No classification result is available for this image.")
+        except CheckpointError:
+            errors.append("The private classifier checkpoint could not be retrieved or loaded. Check the server-side artifact configuration.")
+        except Exception:
+            errors.append("Classifier inference failed. No classification result is available for this image.")
 
-        if "segmenter" in artifact_setup_errors:
-            errors.append(artifact_setup_errors["segmenter"])
-        elif not segmenter_path or not segmenter_path.is_file():
-            errors.append("Segmentation checkpoint is unavailable. Configure BRAIN_MRI_SEGMENTER_CHECKPOINT or the private segmentation artifact settings on the server.")
-        else:
-            try:
+        try:
+            segmenter_path = configured_checkpoint_path("segmenter")
+            if not segmenter_path.is_file():
+                errors.append("Segmentation checkpoint is unavailable. Configure BRAIN_MRI_SEGMENTER_CHECKPOINT or the private segmentation artifact settings on the server.")
+            else:
                 stat = segmenter_path.stat()
                 segmenter, segmenter_meta = cached_segmenter(
                     str(segmenter_path), stat.st_mtime_ns, stat.st_size, device_name
@@ -227,10 +223,10 @@ if st.button("Run MRI analysis", type="primary", use_container_width=True):
                 segmentation = predict_segmentation(
                     segmenter, original, segmenter_meta, device, threshold=float(threshold)
                 )
-            except CheckpointError:
-                errors.append("The segmentation checkpoint could not be loaded. Check that the configured server-side artifact is valid and matches this repository's model architecture.")
-            except Exception:
-                errors.append("Segmentation inference failed. No mask is available for this image.")
+        except CheckpointError:
+            errors.append("The private segmentation checkpoint could not be retrieved or loaded. Check the server-side artifact configuration.")
+        except Exception:
+            errors.append("Segmentation inference failed. No mask is available for this image.")
 
     flags = input_quality_flags(original)
     predicted_label = classification.get("predicted_class") if classification else None
