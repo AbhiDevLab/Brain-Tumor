@@ -78,6 +78,8 @@ _SECRET_KEYS = (
     "BRAIN_MRI_CLASSIFIER_TOKEN", "BRAIN_MRI_CLASSIFIER_SHA256",
     "BRAIN_MRI_SEGMENTER_CHECKPOINT", "BRAIN_MRI_SEGMENTER_URL",
     "BRAIN_MRI_SEGMENTER_TOKEN", "BRAIN_MRI_SEGMENTER_SHA256",
+    "BRAIN_MRI_SEGMENTER_BCE_DICE_CHECKPOINT", "BRAIN_MRI_SEGMENTER_BCE_DICE_URL",
+    "BRAIN_MRI_SEGMENTER_BCE_DICE_TOKEN", "BRAIN_MRI_SEGMENTER_BCE_DICE_SHA256",
     "BRAIN_MRI_MODEL_CACHE_DIR", "BRAIN_MRI_GITHUB_TOKEN",
 )
 for _secret_key in _SECRET_KEYS:
@@ -102,6 +104,7 @@ checkpoint_status_labels = {
 }
 classifier_source_status = checkpoint_source_status("classifier")
 segmenter_source_status = checkpoint_source_status("segmenter")
+comparison_source_status = checkpoint_source_status("segmenter_bce_dice")
 
 
 @st.cache_resource(show_spinner=False)
@@ -125,6 +128,7 @@ with st.expander("Model availability", expanded=False):
         st.markdown("**Segmentation model (BCE U-Net default)**")
         st.write(checkpoint_status_labels[segmenter_source_status])
         st.caption("Default threshold: 0.50. The BCE + Dice experiment is not the default.")
+    st.caption(f"Optional BCE + soft Dice checkpoint: {checkpoint_status_labels[comparison_source_status]}.")
     st.caption(f"Inference device: {'CUDA GPU' if device_name == 'cuda' else 'CPU'}.")
 
 uploaded = st.file_uploader(
@@ -178,6 +182,17 @@ with details_col:
     st.write(f'**Intensity variation:** {input_metadata["intensity_std_0_to_255"]:.2f} / 255')
     st.caption("Uploads are processed in memory for the active session; this app does not write uploaded images to disk or maintain an image history. Clear the uploader or close the browser tab to discard the upload.")
 
+segmenter_choice = st.radio(
+    "Segmentation model",
+    ["BCE U-Net baseline (default)", "BCE + soft Dice (research comparison)"],
+    horizontal=True,
+    help="The BCE U-Net remains the default. The BCE + soft Dice checkpoint is available only for research comparison and is not established as superior.",
+)
+segmenter_kind = "segmenter_bce_dice" if segmenter_choice.startswith("BCE +") else "segmenter"
+if st.session_state.get("analysis_segmenter_kind") != segmenter_kind:
+    st.session_state.pop("analysis_result", None)
+    st.session_state["analysis_segmenter_kind"] = segmenter_kind
+
 threshold = st.slider(
     "Segmentation pixel threshold",
     min_value=0.05,
@@ -211,9 +226,9 @@ if st.button("Run MRI analysis", type="primary", use_container_width=True):
             errors.append("Classifier inference failed. No classification result is available for this image.")
 
         try:
-            segmenter_path = configured_checkpoint_path("segmenter")
+            segmenter_path = configured_checkpoint_path(segmenter_kind)
             if not segmenter_path.is_file():
-                errors.append("Segmentation checkpoint is unavailable. Configure BRAIN_MRI_SEGMENTER_CHECKPOINT or the private segmentation artifact settings on the server.")
+                errors.append("Segmentation checkpoint is unavailable. Configure the selected segmentation checkpoint or the private GitHub Release token on the server.")
             else:
                 stat = segmenter_path.stat()
                 segmenter, segmenter_meta = cached_segmenter(
