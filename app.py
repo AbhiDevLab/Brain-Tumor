@@ -125,7 +125,7 @@ with st.expander("Model availability", expanded=False):
         st.write("Configured checkpoint found" if classifier_path and classifier_path.is_file() else "Checkpoint unavailable")
         st.caption("Expected output: glioma, meningioma, pituitary tumor, or no tumor.")
     with b:
-        st.markdown("**BCE U-Net segmenter**")
+        st.markdown("**Segmentation model (BCE U-Net default)**")
         st.write("Configured checkpoint found" if segmenter_path and segmenter_path.is_file() else "Checkpoint unavailable")
         st.caption("Default threshold: 0.50. The BCE + Dice experiment is not the default.")
     st.caption(f"Inference device: {'CUDA GPU' if device_name == 'cuda' else 'CPU'}.")
@@ -271,7 +271,8 @@ if result is not None:
                     "This is not a calibrated probability or a measure of clinical certainty."
                 )
                 st.caption(
-                    f'Checkpoint: {class_result["checkpoint_name"]} · input tensor: '
+                    f'Checkpoint: {class_result["checkpoint_name"]} · SHA-256: '
+                    f'{class_result["checkpoint_sha256"][:12]}… · input tensor: '
                     f'{class_result["input_tensor_shape"]}'
                 )
             with c2:
@@ -297,7 +298,8 @@ if result is not None:
             with q3:
                 st.metric("Pixel threshold", f'{seg_result["threshold"]:.2f}')
             st.caption(
-                f'Checkpoint: {seg_result["checkpoint_name"]} · output grid: '
+                f'Checkpoint: {seg_result["checkpoint_name"]} · training loss: {seg_result["loss_mode"]} · '
+                f'SHA-256: {seg_result["checkpoint_sha256"][:12]}… · output grid: '
                 f'{seg_result["output_grid_size_px"][0]} × {seg_result["output_grid_size_px"][1]}. '
                 "Foreground pixel count and fraction are pixel-grid statistics, not physical tumor size."
             )
