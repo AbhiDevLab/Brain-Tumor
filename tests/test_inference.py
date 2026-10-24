@@ -294,3 +294,124 @@ def test_checkpoint_source_status_does_not_trigger_download_or_expose_secrets(tm
 
     monkeypatch.delenv("BRAIN_MRI_CLASSIFIER_TOKEN")
     assert inference.checkpoint_source_status("classifier") == "private_incomplete"
+
+
+
+def test_github_release_asset_download_follows_redirect_without_forwarding_token(tmp_path, monkeypatch):
+    import io
+    from email.message import Message
+    from urllib.error import HTTPError
+
+    payload = b"real-checkpoint-download-contract"
+    expected = hashlib.sha256(payload).hexdigest()
+    asset = {
+        "asset_id": 424242,
+        "name": "efficientnet_b0_best_20261020T192345Z.pt",
+        "size_bytes": len(payload),
+        "sha256": expected,
+        "architecture": "efficientnet_b0",
+    }
+    monkeypatch.setitem(inference.GITHUB_RELEASE_ASSETS, "classifier", asset)
+    calls = []
+
+    class FakeResponse(io.BytesIO):
+        def __init__(self, body, url):
+            super().__init__(body)
+            self.headers = {"Content-Length": str(len(body)), "Content-Type": "application/octet-stream"}
+            self._url = url
+
+        def geturl(self):
+            return self._url
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+
+    class FakeOpener:
+        def open(self, request, timeout):
+            calls.append(request)
+            assert timeout == 90
+            if len(calls) == 1:
+                assert request.full_url == "https://api.github.com/repos/AbhiDevLab/Brain-Tumor/releases/assets/424242"
+                assert request.get_header("Authorization") == "Bearer read-only-secret"
+                assert request.get_header("Accept") == "application/octet-stream"
+                headers = Message()
+                headers["Location"] = "https://release-assets.githubusercontent.com/download/checkpoint.pt?sig=signed"
+                raise HTTPError(request.full_url, 302, "Found", headers, io.BytesIO())
+            assert request.full_url.startswith("https://release-assets.githubusercontent.com/")
+            assert not any(k.lower() == "authorization" for k in request.headers)
+            return FakeResponse(payload, request.full_url)
+
+    monkeypatch.setattr(inference, "build_opener", lambda *_args, **_kwargs: FakeOpener())
+    result = inference._download_github_release_asset(
+        "classifier", "read-only-secret", cache_dir=tmp_path
+    )
+    assert result.name == asset["name"]
+    assert result.read_bytes() == payload
+    assert inference._sha256(result) == expected
+    assert len(calls) == 2
+
+
+def test_github_release_asset_rejects_unapproved_redirect_host(tmp_path, monkeypatch):
+    import io
+    from email.message import Message
+    from urllib.error import HTTPError
+
+    asset = dict(inference.GITHUB_RELEASE_ASSETS["classifier"])
+    monkeypatch.setitem(inference.GITHUB_RELEASE_ASSETS, "classifier", asset)
+    calls = []
+
+    class FakeOpener:
+        def open(self, request, timeout):
+            calls.append(request)
+            headers = Message()
+            headers["Location"] = "https://attacker.example.com/checkpoint.pt?token=anything"
+            raise HTTPError(request.full_url, 302, "Found", headers, io.BytesIO())
+
+    monkeypatch.setattr(inference, "build_opener", lambda *_args, **_kwargs: FakeOpener())
+    with pytest.raises(inference.CheckpointError, match="unapproved release asset redirect host"):
+        inference._download_github_release_asset("classifier", "read-only-secret", cache_dir=tmp_path)
+    assert len(calls) == 1
+    assert not (tmp_path / asset["name"]).exists()
+
+
+def test_github_release_asset_checksum_mismatch_fails_closed(tmp_path, monkeypatch):
+    import io
+    from email.message import Message
+    from urllib.error import HTTPError
+
+    payload = b"wrong bytes"
+    asset = {
+        "asset_id": 989898,
+        "name": "unet_bce_best_20261020T195800Z.pt",
+        "size_bytes": len(payload),
+        "sha256": hashlib.sha256(b"the right bytes").hexdigest(),
+        "architecture": "unet_binary",
+    }
+    monkeypatch.setitem(inference.GITHUB_RELEASE_ASSETS, "segmenter", asset)
+
+    class FakeResponse(io.BytesIO):
+        headers = {"Content-Length": str(len(payload)), "Content-Type": "application/octet-stream"}
+
+        def geturl(self):
+            return "https://api.github.com/repos/AbhiDevLab/Brain-Tumor/releases/assets/989898"
+
+    class FakeOpener:
+        def open(self, request, timeout):
+            return FakeResponse(payload)
+
+    monkeypatch.setattr(inference, "build_opener", lambda *_args, **_kwargs: FakeOpener())
+    with pytest.raises(inference.CheckpointError, match="SHA-256 integrity check"):
+        inference._download_github_release_asset("segmenter", "read-only-secret", cache_dir=tmp_path)
+    assert not (tmp_path / asset["name"]).exists()
+
+
+def test_checkpoint_source_status_supports_private_github_release(monkeypatch):
+    monkeypatch.delenv("BRAIN_MRI_CLASSIFIER_CHECKPOINT", raising=False)
+    monkeypatch.delenv("BRAIN_MRI_CLASSIFIER_URL", raising=False)
+    monkeypatch.setenv("BRAIN_MRI_GITHUB_TOKEN", "secret-must-not-be-returned")
+    assert inference.checkpoint_source_status("classifier") == "github_configured"
+    assert "secret-must-not-be-returned" not in inference.checkpoint_source_status("classifier")
+    monkeypatch.delenv("BRAIN_MRI_GITHUB_TOKEN")
