@@ -180,12 +180,17 @@ def _download_github_release_asset(
                     api_message = ""
                     try:
                         raw_error = exc.read(4096).decode("utf-8", "replace")
-                        if raw_error:
-                            try:
-                                error_payload = json.loads(raw_error)
-                                api_message = str(error_payload.get("message", ""))[:300]
-                            except (ValueError, AttributeError):
-                                api_message = " ".join(raw_error.split())[:300]
+                        error_payload = json.loads(raw_error) if raw_error else {}
+                        candidate_message = error_payload.get("message", "")
+                        # Never echo arbitrary server response text into logs or UI.
+                        # Surface only stable, non-sensitive GitHub permission errors.
+                        safe_api_messages = {
+                            "Resource not accessible by personal access token",
+                            "Resource not accessible by integration",
+                            "Bad credentials",
+                        }
+                        if isinstance(candidate_message, str) and candidate_message in safe_api_messages:
+                            api_message = candidate_message
                     except Exception:
                         api_message = ""
                     request_id = exc.headers.get("X-GitHub-Request-Id", "") if exc.headers else ""
