@@ -137,6 +137,9 @@ uploaded = st.file_uploader(
 )
 
 if uploaded is None:
+    # Clearing the uploader also clears retained in-session visualization/report data.
+    st.session_state.pop("analysis_result", None)
+    st.session_state.pop("upload_key", None)
     st.info("Upload an image to preview it and check its dimensions before running inference.")
     col1, col2, col3 = st.columns(3)
     with col1:
