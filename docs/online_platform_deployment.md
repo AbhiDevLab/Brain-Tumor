@@ -8,14 +8,14 @@ This application is a research demonstration for de-identified **2D image files*
 
 ## Current checkpoint inventory
 
-Model binaries are deliberately excluded from Git. The current researcher-provided artifacts are in Google Drive:
+Model binaries are deliberately excluded from ordinary Git history. The verified best checkpoints are already attached to the private draft GitHub Release [Brain Tumor Baseline Checkpoints — 2026-10-21](https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b). The original Colab/Drive paths are retained here for local research:
 
 - Classifier: `/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt`
 - Classifier recovery checkpoint: corresponding `.latest.pt`
 - Default segmenter: `/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_best_20261020T195800Z.pt`
 - BCE + Dice research comparison: `/content/drive/MyDrive/BrainTumorResearch/models/segmenter/unet_bce_dice_best_20261020T205900Z.pt`
 
-These paths are local to the researcher's Google Drive/Colab setup. A hosted application cannot assume that this Drive is mounted. The BCE U-Net is the platform default. BCE + Dice is retained as an optional research artifact, not a proven improvement.
+These paths are local to the researcher's Google Drive/Colab setup; a hosted application cannot assume that Drive is mounted. The hosted path can instead download the best assets directly from the private GitHub Release using `BRAIN_MRI_GITHUB_TOKEN`. The BCE U-Net is the platform default; the app now offers BCE + Dice as an optional comparison only, not a proven improvement.
 
 ### Research metrics recorded from the completed runs
 
