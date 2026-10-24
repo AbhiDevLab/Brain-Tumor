@@ -8,7 +8,7 @@ This application is a research demonstration for de-identified **2D image files*
 
 ## Current checkpoint inventory
 
-Model binaries are deliberately excluded from ordinary Git history. The verified best checkpoints are already attached to the private draft GitHub Release [Brain Tumor Baseline Checkpoints — 2026-10-21](https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b). The original Colab/Drive paths are retained here for local research:
+Model binaries are deliberately excluded from ordinary Git history. The verified best checkpoints are attached to the repository's published pre-release [Brain Tumor Baseline Checkpoints — 2026-10-21](https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b). The release remains within a private repository. The original Colab/Drive paths are retained here for local research:
 
 - Classifier: `/content/drive/MyDrive/BrainTumorResearch/models/classifier/efficientnet_b0_best_20261020T192345Z.pt`
 - Classifier recovery checkpoint: corresponding `.latest.pt`
@@ -52,7 +52,7 @@ Do not put these files in the Git repository. A Colab `/content/drive/...` path 
 
 ### Option B — existing private GitHub Release (preferred)
 
-The trained best checkpoints already exist in the private draft release [Brain Tumor Baseline Checkpoints — 2026-10-21](https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b). The application is configured to retrieve the two pinned best assets directly through the GitHub Release asset API. No second artifact store or model upload is required.
+The trained best checkpoints already exist in the published pre-release [Brain Tumor Baseline Checkpoints — 2026-10-21](https://github.com/AbhiDevLab/Brain-Tumor/releases/tag/untagged-43fd0c2fb84e8d525a8b). The application retrieves the pinned best assets directly through the GitHub Release asset API. No second artifact store or model upload is required.
 
 | Model | Release asset ID | Expected SHA-256 |
 |---|---:|---|
@@ -60,7 +60,7 @@ The trained best checkpoints already exist in the private draft release [Brain T
 | BCE U-Net | `660464605` | `7b7cac96ceebdccf892ecfd7bfbe36a14fdda1bb5ce8899716a1db6ed2624357` |
 | BCE + soft Dice U-Net (optional) | `661318090` | `346c701760b56d27def9d779f2d6e96f740579454fcc8a2db623ccfc28edc008` |
 
-The API returned these three best-asset IDs, names, sizes and SHA-256 digests; each digest matched the value supplied for the release. The release is still marked as a **draft**. The inference loader pins the asset IDs, expected sizes and hashes; it does not select a `.latest.pt` recovery checkpoint.
+The API returned these three best-asset IDs, names, sizes and SHA-256 digests; each digest matched the expected value. The release is now **published as a pre-release**. GitHub Actions run [#147](https://github.com/AbhiDevLab/Brain-Tumor/actions/runs/40102691461) confirmed that all three pinned best assets download successfully, pass SHA-256 verification, load with the strict model loaders, and produce contract-valid outputs on a synthetic software-test pattern. It does not evaluate MRI accuracy. The inference loader pins asset IDs, expected sizes and hashes; it does not select a `.latest.pt` recovery checkpoint.
 
 #### Hosted app setup
 
@@ -71,12 +71,12 @@ The API returned these three best-asset IDs, names, sizes and SHA-256 digests; e
    ```
 3. Save the secret and restart/redeploy the app. When a user requests inference, it downloads the required best checkpoints, validates the response size and SHA-256, and then passes them to the existing strict model loaders.
 4. Add the same token as a GitHub repository Actions secret: open `AbhiDevLab/Brain-Tumor → Settings → Secrets and variables → Actions → New repository secret`, name it `BRAIN_MRI_GITHUB_TOKEN`, and paste the value there. The smoke job reads that secret through its server-side environment; it is never printed.
-5. Restart/re-run the workflow and confirm the real-checkpoint smoke job reports successful SHA-256 verification, strict model loading, four classifier scores, Grad-CAM generation, a binary mask and an aligned overlay.
+5. The real-checkpoint smoke test has passed on GitHub Actions: SHA-256 verification, strict model loading, four classifier scores, Grad-CAM generation, a binary mask, aligned overlays and report serialization all passed using a synthetic software-test pattern.
 6. Check the live URL in a separate browser session. A private GitHub repository and a private Streamlit app are separate settings; make the app public or explicitly invite viewers depending on your sharing choice.
 
 
 
-**Why a separate token is needed for the draft release:** the first real-checkpoint CI attempt reached the private asset API but its built-in workflow `GITHUB_TOKEN` received HTTP 403. GitHub documents that only actors with push access can list draft releases; the read-only workflow token was not enough to access this draft asset. Keep the artifact private; use the repository-scoped fine-grained token for an account that can access the draft release, with the token itself limited to **Contents: Read-only**. See [GitHub release listing permissions](https://docs.github.com/en/rest/releases/releases#list-releases) and [Get a release asset](https://docs.github.com/en/rest/releases/assets#get-a-release-asset). No model upload to a separate provider is required.
+**Checkpoint access:** the first real-checkpoint CI attempt received HTTP 403 while the release was still a draft. After publishing it as a pre-release and adding the repository-scoped fine-grained token as `BRAIN_MRI_GITHUB_TOKEN`, GitHub Actions successfully downloaded the checkpoints and passed SHA-256 verification and smoke inference. The token is limited to **Contents: Read-only**. See [GitHub release listing permissions](https://docs.github.com/en/rest/releases/releases#list-releases) and [Get a release asset](https://docs.github.com/en/rest/releases/assets#get-a-release-asset). No separate artifact store or model upload is required.
 
 #### Redirect and integrity handling
 
@@ -151,7 +151,7 @@ python -m pytest -q
 streamlit run app.py
 ```
 
-The inference unit tests use small controlled model doubles for software-contract checks; those tests are not medical-image performance results. Final acceptance still requires the actual saved classifier checkpoint and the actual BCE U-Net checkpoint to load and produce outputs in the intended hosted runtime. Until that real-artifact check and live smoke test happen, the deployment is not considered verified.
+The inference unit tests use small controlled model doubles for software-contract checks; those tests are not medical-image performance results. The actual saved classifier and both U-Net checkpoints have now loaded successfully in GitHub Actions and produced contract-valid outputs on a synthetic software-test pattern. Final acceptance still requires deployment to the intended hosted runtime, checking resource use and live URL availability, and an end-to-end smoke test with an approved de-identified MRI. The synthetic CI test is not evidence of MRI accuracy or clinical validity.
 
 
 ## Hosting alternatives considered
