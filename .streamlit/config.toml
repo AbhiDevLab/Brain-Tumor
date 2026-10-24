@@ -7,7 +7,7 @@ showEmailPrompt = false
 gatherUsageStats = false
 
 [client]
-showErrorDetails = false
+showErrorDetails = "none"
 
 [theme]
 base = "light"
