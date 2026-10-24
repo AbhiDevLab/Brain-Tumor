@@ -53,7 +53,10 @@ def _download_private_artifact(kind: str, url: str, token: str, expected_sha256:
     The URL is an endpoint, not a signed URL: credentials belong in a separate
     read-only Bearer token. A trusted SHA-256 value is required before loading.
     """
-    parsed = urlparse(url)
+    try:
+        parsed = urlparse(url)
+    except ValueError as exc:
+        raise CheckpointError("The private artifact endpoint URL is invalid.") from exc
     if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise CheckpointError("The private artifact endpoint must be a clean HTTPS URL without embedded credentials or query parameters.")
     if not token or not re.fullmatch(r"[0-9a-fA-F]{64}", expected_sha256 or ""):
