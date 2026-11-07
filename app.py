@@ -33,28 +33,195 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    .block-container {max-width: 1420px; padding-top: 1.25rem; padding-bottom: 3rem;}
-    [data-testid="stSidebar"] {border-right: 1px solid rgba(120,140,160,.20);}
-    .hero {padding: 1.6rem 1.85rem; border-radius: 18px; background: linear-gradient(120deg,#102a43 0%,#176b87 100%); color: #fff; margin-bottom: 1rem;}
-    .hero h1 {color:#fff; font-size:2.25rem; line-height:1.16; margin:0 0 .55rem 0;}
-    .hero p {color:#e3f2f7; max-width:850px; margin:0; font-size:1.02rem;}
-    .eyebrow {letter-spacing:.12em; text-transform:uppercase; font-size:.74rem; font-weight:700; opacity:.88; margin-bottom:.65rem;}
-    .warning-note {border:1px solid #dfb35b; border-left:5px solid #d39b2a; padding:.9rem 1rem; border-radius:9px; background:rgba(211,155,42,.08); margin:.8rem 0 1.15rem 0;}
-    .section-kicker {letter-spacing:.08em; text-transform:uppercase; font-size:.72rem; font-weight:700; color:#527086; margin-bottom:.2rem;}
-    div[data-testid="stMetric"] {border:1px solid rgba(120,140,160,.24); border-radius:12px; padding:.75rem .95rem;}
+    :root {
+      --ink-0: #07111d;
+      --ink-1: #0b1726;
+      --ink-2: #101f32;
+      --ink-3: #172a40;
+      --line: rgba(137, 178, 207, .17);
+      --line-strong: rgba(85, 211, 230, .34);
+      --text-main: #edf6ff;
+      --text-soft: #a9bfd1;
+      --text-dim: #7690a7;
+      --cyan: #4bd8e8;
+      --cyan-soft: #9cecf3;
+      --blue: #589cff;
+      --amber: #f2c36c;
+    }
+    html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"] {
+      background: #07111d !important;
+      color: var(--text-main) !important;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    [data-testid="stAppViewContainer"] {
+      background:
+        radial-gradient(ellipse at 80% 0%, rgba(25, 116, 153, .14), transparent 34%),
+        radial-gradient(ellipse at 7% 44%, rgba(29, 86, 132, .10), transparent 32%),
+        linear-gradient(180deg, #081321 0%, #07111d 62%, #091523 100%) !important;
+    }
+    [data-testid="stHeader"] { background: rgba(7, 17, 29, .78) !important; }
+    [data-testid="stToolbar"] { background: transparent !important; }
+    .block-container {max-width: 1480px; padding: 1.55rem 2.3rem 3.6rem; }
+    [data-testid="stMainBlockContainer"] { color: var(--text-main); }
+    [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, #0b1929 0%, #091522 100%) !important;
+      border-right: 1px solid var(--line) !important;
+    }
+    [data-testid="stSidebar"] > div:first-child { background: transparent !important; }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
+      color: var(--text-soft) !important;
+    }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+      color: #f2f8ff !important; letter-spacing: -.02em;
+    }
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stText"], label, .stCaption, [data-testid="stCaptionContainer"] {
+      color: var(--text-soft);
+    }
+    h1, h2, h3, h4 { color: var(--text-main) !important; letter-spacing: -.035em; }
+    h1 {font-size: 2rem !important; font-weight: 720 !important;}
+    h2 {font-size: 1.48rem !important; font-weight: 680 !important; margin-top: .35rem !important;}
+    h3 {font-size: 1.08rem !important; font-weight: 650 !important;}
+    strong, b {color: #f4f9ff;}
+    a {color: var(--cyan) !important;}
+    hr {border-color: var(--line) !important; margin: 1.5rem 0 !important;}
+
+    .hero-shell {
+      position: relative; isolation: isolate; overflow: hidden;
+      padding: 1.65rem 1.9rem 1.25rem; margin: .1rem 0 1.15rem;
+      border: 1px solid rgba(111, 214, 232, .27); border-radius: 22px;
+      background:
+        radial-gradient(circle at 84% 24%, rgba(73, 220, 238, .19), transparent 24%),
+        linear-gradient(118deg, rgba(13, 34, 55, .98) 0%, rgba(12, 57, 79, .96) 54%, rgba(12, 73, 91, .92) 100%);
+      box-shadow: 0 18px 52px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .hero-shell:before {
+      content: ""; position: absolute; z-index: -1; inset: 0; opacity: .16;
+      background-image: linear-gradient(rgba(153,229,239,.16) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(153,229,239,.16) 1px, transparent 1px);
+      background-size: 34px 34px; mask-image: linear-gradient(90deg, black, transparent 80%);
+    }
+    .hero-topline {display:flex; align-items:center; gap:.65rem; color:#a6dce7; font-size:.68rem; font-weight:750; letter-spacing:.16em; text-transform:uppercase;}
+    .pulse-dot {width:7px; height:7px; border-radius:50%; background:#57e3d1; box-shadow:0 0 0 4px rgba(87,227,209,.13), 0 0 14px rgba(87,227,209,.7);}
+    .hero-grid {display:grid; grid-template-columns:minmax(0,1fr) 190px; gap:1.4rem; align-items:center; margin-top:1.15rem;}
+    .hero-shell h1 {color:#f4fbff !important; font-size:2.35rem !important; line-height:1.05 !important; margin:0 0 .7rem !important; letter-spacing:-.055em !important;}
+    .hero-shell h1 span {color:#76e3ee;}
+    .hero-shell p {color:#c0d9e7 !important; max-width:760px; margin:0; font-size:.98rem; line-height:1.65;}
+    .hero-emblem {
+      width:160px; height:126px; justify-self:end; border:1px solid rgba(123,226,239,.25);
+      border-radius:20px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      background:linear-gradient(145deg,rgba(81,205,226,.12),rgba(11,29,49,.28));
+      box-shadow:inset 0 0 35px rgba(76,213,232,.07),0 12px 30px rgba(0,0,0,.16);
+    }
+    .emblem-core {font-size:2.25rem; line-height:1; color:#79e6f0; text-shadow:0 0 24px rgba(82,224,239,.38);}
+    .emblem-caption {font-size:.62rem; letter-spacing:.17em; color:#a6dce7; font-weight:750; margin-top:.65rem;}
+    .hero-bottom {display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:1.35rem; padding-top:.9rem; border-top:1px solid rgba(153,220,232,.16);}
+    .hero-chip {font-size:.72rem; color:#b4d4e2; letter-spacing:.02em;}
+    .hero-chip b {color:#e8fbff; font-weight:700; margin-right:.3rem;}
+    .research-warning {
+      display:flex; gap:.8rem; align-items:flex-start; padding:.85rem 1rem; margin:0 0 1.55rem;
+      border:1px solid rgba(242,195,108,.28); border-left:3px solid var(--amber); border-radius:12px;
+      background:linear-gradient(100deg,rgba(91,67,31,.20),rgba(28,34,40,.56));
+      color:#e8d9b8; font-size:.82rem; line-height:1.55;
+    }
+    .warning-icon {color:var(--amber); font-weight:900; font-size:1rem; line-height:1.2;}
+    .section-kicker {letter-spacing:.17em; text-transform:uppercase; font-size:.65rem; font-weight:800; color:#65ccdc !important; margin-bottom:.28rem;}
+    div[data-testid="stMetric"] {
+      background:linear-gradient(145deg,rgba(19,38,58,.88),rgba(12,27,43,.9)) !important;
+      border:1px solid var(--line) !important; border-radius:15px !important;
+      padding:.9rem 1rem !important; box-shadow:0 8px 22px rgba(0,0,0,.13);
+    }
+    [data-testid="stMetricLabel"] {color:#9ab5ca !important; font-size:.78rem !important;}
+    [data-testid="stMetricValue"] {color:#f2fbff !important; font-weight:720 !important; letter-spacing:-.035em;}
+    [data-testid="stMetricDelta"] {font-size:.72rem !important;}
+    [data-testid="stExpander"] {
+      background:rgba(15,31,49,.78) !important; border:1px solid var(--line) !important;
+      border-radius:13px !important; overflow:hidden;
+    }
+    [data-testid="stExpander"] summary {color:#c8dbea !important; font-weight:620;}
+    [data-testid="stFileUploader"] section {
+      background:linear-gradient(145deg,rgba(16,36,56,.8),rgba(10,24,39,.8)) !important;
+      border:1px dashed rgba(85,211,230,.42) !important; border-radius:15px !important;
+    }
+    [data-testid="stFileUploader"] section:hover {border-color:var(--cyan) !important; background:rgba(28,67,84,.38) !important;}
+    [data-testid="stFileUploader"] small, [data-testid="stFileUploader"] span {color:#a9c4d7 !important;}
+    [data-testid="stImage"] img {border-radius:13px; border:1px solid var(--line);}
+    [data-testid="stAlert"] {border-radius:12px !important; border:1px solid var(--line) !important;}
+    [data-testid="stDataFrame"], [data-testid="stTable"] {
+      background:rgba(13,29,46,.86) !important; border:1px solid var(--line) !important; border-radius:13px; overflow:hidden;
+    }
+    [data-testid="stChart"] {background:rgba(13,29,46,.46); border:1px solid var(--line); border-radius:14px; padding:.45rem;}
+    [data-testid="stProgress"] > div > div {background:linear-gradient(90deg,#2db9d0,#76e5ed) !important;}
+    [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {background:#71e2ed !important; border-color:#71e2ed !important;}
+    [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {
+      background:#0b1b2c !important; color:#eff8ff !important; border-color:var(--line-strong) !important;
+    }
+    [data-baseweb="select"] > div {background:#0d2033 !important; border-color:var(--line) !important; color:#eef8ff !important;}
+    [data-testid="stButton"] button, [data-testid="stDownloadButton"] button {
+      border-radius:10px !important; font-weight:680 !important; transition:all .18s ease;
+      border:1px solid rgba(90,213,230,.28) !important;
+    }
+    [data-testid="stButton"] button[kind="primary"], [data-testid="stDownloadButton"] button {
+      background:linear-gradient(105deg,#167c98,#1ba6b8) !important; color:#f5feff !important;
+      box-shadow:0 7px 18px rgba(23,157,180,.18);
+    }
+    [data-testid="stButton"] button:hover, [data-testid="stDownloadButton"] button:hover {
+      transform:translateY(-1px); border-color:rgba(104,229,240,.75) !important;
+      box-shadow:0 9px 22px rgba(23,157,180,.23);
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] label {
+      padding:.48rem .65rem !important; border-radius:9px; margin:.12rem 0;
+      border:1px solid transparent; transition:all .15s ease;
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] label:hover {background:rgba(66,167,194,.10); border-color:var(--line);}
+    [data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"] {
+      background:linear-gradient(100deg,rgba(48,177,200,.20),rgba(42,105,138,.13));
+      border-color:rgba(79,207,225,.27);
+    }
+    .sidebar-brand {display:flex; align-items:center; gap:.65rem; margin-bottom:.1rem;}
+    .sidebar-mark {
+      width:35px; height:35px; display:flex; align-items:center; justify-content:center; border-radius:11px;
+      background:linear-gradient(145deg,#1e8aa4,#164b6c); border:1px solid rgba(113,225,239,.35);
+      box-shadow:0 6px 18px rgba(14,135,164,.20); font-size:1.05rem;
+    }
+    .sidebar-overline {font-size:.58rem; color:#67d3e1; font-weight:800; letter-spacing:.16em; text-transform:uppercase;}
+    .sidebar-name {font-size:1.02rem; font-weight:760; color:#eef9ff; letter-spacing:-.03em;}
+    .sidebar-label {font-size:.62rem; text-transform:uppercase; letter-spacing:.15em; font-weight:800; color:#68cddd; margin:.5rem 0 .35rem;}
+    .footer-note {color:#7893aa; font-size:.72rem; letter-spacing:.02em; padding:.2rem 0;}
+    @media (max-width: 760px) {
+      .block-container {padding:1rem 1rem 2.5rem;}
+      .hero-grid {grid-template-columns:1fr;}
+      .hero-emblem {display:none;}
+      .hero-shell h1 {font-size:1.85rem !important;}
+      .hero-bottom {gap:.7rem;}
+    }
     </style>
-    <div class="hero">
-      <div class="eyebrow">Research demonstration · 2D MRI workflow</div>
-      <h1>Brain MRI Research Platform</h1>
-      <p>Four-class MRI classification, binary tumor-region segmentation, and classifier attribution using the project's saved research checkpoints.</p>
+    <div class="hero-shell">
+      <div class="hero-topline"><span class="pulse-dot"></span> Neuro-imaging research environment <span style="opacity:.45">/</span> 2D MRI pipeline</div>
+      <div class="hero-grid">
+        <div>
+          <h1>Brain MRI <span>Research Lab</span></h1>
+          <p>Integrated experimental workspace for four-class MRI classification, tumor-region segmentation, and explainable model attribution.</p>
+        </div>
+        <div class="hero-emblem">
+          <div class="emblem-core">◎</div>
+          <div class="emblem-caption">NEURO · AI SYSTEM</div>
+        </div>
+      </div>
+      <div class="hero-bottom">
+        <div class="hero-chip"><b>01</b> EfficientNet-B0 classification</div>
+        <div class="hero-chip"><b>02</b> U-Net segmentation</div>
+        <div class="hero-chip"><b>03</b> Grad-CAM attribution</div>
+      </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 st.markdown(
-    '<div class="warning-note"><b>Research use only — not a medical device.</b> '
-    'The models have not been clinically validated. Their outputs can be wrong and must not be used for diagnosis, treatment, triage, or medical decisions. '
-    'Upload only de-identified 2D images. Real MRI studies must be reviewed by qualified medical professionals.</div>',
+    '<div class="research-warning"><span class="warning-icon">!</span><span><b>Research use only — not a medical device.</b> '
+    'These models are not clinically validated. Outputs can be wrong and must not guide diagnosis, treatment, triage, or medical decisions. '
+    'Use de-identified 2D images only; clinical MRI studies require review by qualified medical professionals.</span></div>',
     unsafe_allow_html=True,
 )
 
@@ -650,16 +817,20 @@ def show_research_page() -> None:
 
 NAV_ITEMS = ["Overview", "MRI Analysis", "Classification", "Segmentation", "Explainable AI", "Research & Metrics"]
 with st.sidebar:
-    st.title("🧠 Brain MRI Lab")
-    st.caption("Research platform · 2D workflow")
+    st.markdown(
+        '<div class="sidebar-brand"><div class="sidebar-mark">◎</div><div><div class="sidebar-overline">NEURO · AI</div><div class="sidebar-name">Brain MRI Lab</div></div></div>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Research workstation  /  2D imaging")
+    st.markdown('<div class="sidebar-label">Workspace</div>', unsafe_allow_html=True)
     active_page = st.radio("Workspace", NAV_ITEMS, index=1, label_visibility="collapsed")
     st.divider()
-    st.markdown("**Model stack**")
-    st.caption("EfficientNet-B0 · U-Net · Grad-CAM")
-    st.markdown("**Baseline policy**")
-    st.caption("BCE U-Net default; BCE + Dice is comparison only.")
+    st.markdown('<div class="sidebar-label">Active model stack</div>', unsafe_allow_html=True)
+    st.caption("EfficientNet-B0  ·  U-Net  ·  Grad-CAM")
+    st.markdown('<div class="sidebar-label">Baseline protocol</div>', unsafe_allow_html=True)
+    st.caption("BCE U-Net is the default. BCE + soft Dice is an optional comparison.")
     st.divider()
-    st.caption("Not clinically validated. No medical decisions.")
+    st.markdown('<div class="footer-note">RESEARCH BUILD · NOT CLINICALLY VALIDATED</div>', unsafe_allow_html=True)
 
 latest = current_result()
 if active_page == "Overview":
@@ -676,4 +847,4 @@ elif active_page == "Research & Metrics":
     show_research_page()
 
 st.divider()
-st.caption("Brain MRI Research Platform · Research and education only · Not clinically validated · Do not use for medical decisions.")
+st.markdown('<div class="footer-note">BRAIN MRI RESEARCH LAB  ·  RESEARCH & EDUCATION ONLY  ·  NOT CLINICALLY VALIDATED  ·  DO NOT USE FOR MEDICAL DECISIONS</div>', unsafe_allow_html=True)
