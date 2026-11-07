@@ -61,7 +61,7 @@ st.markdown(
     }
     [data-testid="stHeader"] { background: rgba(7, 17, 29, .78) !important; }
     [data-testid="stToolbar"] { background: transparent !important; }
-    .block-container {max-width: 1480px; padding: 1.55rem 2.3rem 3.6rem; }
+    .block-container {max-width: 1480px; padding: 4.25rem 2.3rem 3.6rem !important; }
     [data-testid="stMainBlockContainer"] { color: var(--text-main); }
     [data-testid="stSidebar"] {
       background: linear-gradient(180deg, #0b1929 0%, #091522 100%) !important;
@@ -190,7 +190,7 @@ st.markdown(
     .sidebar-label {font-size:.62rem; text-transform:uppercase; letter-spacing:.15em; font-weight:800; color:#68cddd; margin:.5rem 0 .35rem;}
     .footer-note {color:#7893aa; font-size:.72rem; letter-spacing:.02em; padding:.2rem 0;}
     @media (max-width: 760px) {
-      .block-container {padding:1rem 1rem 2.5rem;}
+      .block-container {padding:4rem 1rem 2.5rem !important;}
       .hero-grid {grid-template-columns:1fr;}
       .hero-emblem {display:none;}
       .hero-shell h1 {font-size:1.85rem !important;}
