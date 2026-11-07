@@ -272,7 +272,7 @@ def show_mri_analysis() -> None:
     st.header("MRI analysis")
     show_model_availability()
     uploaded = st.file_uploader(
-        "Upload a de-identified 2D brain MRI image",
+        "Upload a 2D brain MRI image",
         type=["png", "jpg", "jpeg", "bmp", "tif", "tiff"],
         help="Maximum 12 MiB. Do not upload names, reports, or identifying information.",
         key="mri_upload",
@@ -652,7 +652,7 @@ NAV_ITEMS = ["Overview", "MRI Analysis", "Classification", "Segmentation", "Expl
 with st.sidebar:
     st.title("🧠 Brain MRI Lab")
     st.caption("Research platform · 2D workflow")
-    active_page = st.radio("Workspace", NAV_ITEMS, label_visibility="collapsed")
+    active_page = st.radio("Workspace", NAV_ITEMS, index=1, label_visibility="collapsed")
     st.divider()
     st.markdown("**Model stack**")
     st.caption("EfficientNet-B0 · U-Net · Grad-CAM")
