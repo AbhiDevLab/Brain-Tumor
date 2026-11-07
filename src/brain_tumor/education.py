@@ -131,7 +131,7 @@ BRAIN_LANDMARKS = {
 }
 
 TUMOUR_OVERVIEWS = {
-    "General information": "A scan label or AI class is not a confirmed diagnosis. The next steps depend on the full MRI, symptoms, examination, medical history, and specialist review.",
+    "General information": "A scan label or AI class is not a confirmed diagnosis. No home remedy is proven to cure a brain tumour. The next steps depend on the full MRI, symptoms, examination, medical history, and specialist review.",
     "Glioma (educational overview)": "Gliomas arise from glial-lineage cells in the central nervous system. Their behaviour and treatment vary considerably by integrated pathology and molecular findings, location, and grade. An AI image class cannot establish any of these details.",
     "Meningioma (educational overview)": "Meningiomas arise from the meninges, the membranes around the brain and spinal cord. Some grow slowly and may be monitored by specialists; others need treatment depending on growth, symptoms, location, and other factors. Monitoring is still planned medical care.",
     "Pituitary-region lesion (educational overview)": "Pituitary-region lesions have varied causes. Assessment may involve hormone testing, visual assessment, and specialist review of dedicated imaging. Do not infer hormone function or the need for treatment from a standard 2D MRI image.",
