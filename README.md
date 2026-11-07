@@ -40,6 +40,18 @@ The metrics in this table were supplied by the researcher and have not been reco
 
 The paired bootstrap comparison reportedly found no convincing overall improvement from BCE + Dice; both 95% confidence intervals included zero. The platform therefore defaults to the BCE U-Net. These evaluation metrics are not performance guarantees on arbitrary MRI images and do not establish external, patient-independent, or clinical validation.
 
+## MRI education and patient-support modules
+
+The Streamlit application includes separate, plain-language learning views alongside the existing model workflow:
+
+- **MRI Pattern Explorer** explains common sequence terms and imaging descriptions such as T2/FLAIR signal, enhancement, edema, mass effect, ring-like enhancement, diffusion restriction, and susceptibility. It explains why a pattern may matter and why it cannot establish a diagnosis by itself.
+- **Brain Anatomy & Landmarks** introduces major brain regions and the axial, coronal, and sagittal viewing planes. Its side-view diagram is a simplified teaching schematic, not a patient-specific localization tool.
+- **Patient Support & Care Guidance** provides general supportive-care topics, clinician discussion questions, and urgent warning signs. It explicitly does not recommend home cures or substitute remedies for specialist care.
+
+These education views do not run a radiology interpretation model. They do not infer MRI sequences, detect the listed imaging patterns, determine tumor location or grade, or prescribe treatment. The existing four-class classifier and U-Net outputs remain research predictions and proposed foreground masks only. Exact lesion localization requires the complete study and spatial metadata; an exported 2D image is not enough.
+
+No food, diet, herb, supplement, or home remedy is established as a brain-tumor cure. Supplements can interact with medicines and treatment. Patients should discuss complementary approaches with their treating team before starting them. The app's patient guidance links to the National Cancer Institute, NHS, and RadiologyInfo (ACR/RSNA) for further reading.
+
 ## Project contents
 
 - `app.py` — multi-section Streamlit research dashboard, inference, threshold/Grad-CAM controls, model comparison, measured timing, and PDF/JSON exports.
