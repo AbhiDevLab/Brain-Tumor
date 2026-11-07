@@ -611,11 +611,13 @@ def predict_classification(
         try:
             cam = generate_gradcam(model, tensor, int(order[0]), output_size=(size, size))
             result["gradcam_overlay"] = overlay_gradcam(image, cam)
+            result["gradcam_map"] = cam
             result["gradcam_status"] = "generated"
         except Exception:
             # The classification prediction remains valid when attribution
             # visualization fails; never mislabel a segmentation mask as Grad-CAM.
             result["gradcam_overlay"] = None
+            result["gradcam_map"] = None
             result["gradcam_status"] = "unavailable"
     return result
 
@@ -652,6 +654,7 @@ def predict_segmentation(
     fraction = float(native_mask.mean())
     return {
         "mask_native": native_mask,
+        "probability_map": probabilities.astype(np.float32),
         "mask_display": display_mask,
         "overlay": Image.fromarray(overlay, mode="RGB"),
         "predicted_foreground_pixels": int(native_mask.sum()),
@@ -737,7 +740,7 @@ def build_result_report(
     if classification is not None:
         classification_report = {
             key: value for key, value in classification.items()
-            if key not in {"gradcam_overlay"}
+            if key not in {"gradcam_overlay", "gradcam_map"}
         }
     segmentation_report = None
     if segmentation is not None:

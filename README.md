@@ -4,7 +4,7 @@ Research prototype for four-class classification of 2D brain MRI images and bina
 
 > **Research-use warning:** The models have not been clinically validated. Scores and masks can be wrong. Do not use them for diagnosis, treatment, triage, or other medical decisions. Upload only de-identified 2D images, and have real MRI studies reviewed by qualified medical professionals.
 
-## Current status — 24 October 2026
+## Current status — 7 November 2026
 
 The research experiments are complete according to the run results supplied by the researcher, and this branch adds an inference pipeline and online-platform UI. The actual model files remain excluded from ordinary Git history and are attached to the repository's published pre-release. The pinned asset IDs, sizes and SHA-256 metadata have been verified. GitHub Actions successfully downloaded all three best checkpoints using the repository's read-only `BRAIN_MRI_GITHUB_TOKEN` secret, verified their SHA-256 hashes, loaded the actual trained weights, and passed a synthetic software-contract inference test on commit `51322230fc261572f1e328d0d67d6c0cd84d085e`. This smoke test is not an MRI performance test. Live hosting and end-to-end testing on an approved de-identified MRI remain separate acceptance gates.
 
@@ -16,6 +16,14 @@ The research experiments are complete according to the run results supplied by t
 - [x] GitHub Actions unit-test suite passed on the updated CPU-only inference dependency setup.
 - [x] Published the checkpoint pre-release and configured the repository Actions secret `BRAIN_MRI_GITHUB_TOKEN` with repository-scoped Contents: Read-only permission.
 - [x] Real-checkpoint smoke test passed: downloaded classifier and both U-Net best checkpoints, verified SHA-256, loaded the actual trained weights, and validated software inference outputs on a synthetic pattern.
+- [x] Created isolated branch `final-review-enhancements` from `feature/online-mri-research-platform` for the final project review.
+- [x] Added separate Overview, MRI Analysis, Classification, Segmentation, Explainable AI, and Research & Metrics views.
+- [x] Added same-image BCE U-Net vs BCE + soft Dice comparison; BCE remains the default.
+- [x] Added probability-map-backed threshold exploration and adjustable Grad-CAM overlay intensity without rerunning model inference.
+- [x] Added measured inference-path timing, PDF research report export, and expanded JSON output.
+- [x] Added a research metrics view that reads raw evaluation JSON when present and otherwise shows only documented aggregate results.
+- [ ] Run CI on `final-review-enhancements`, address any failures, and verify all application pages locally.
+- [ ] Deploy this branch and verify both private checkpoints plus a permitted de-identified MRI on the live app.
 - [ ] Deploy the app, configure the token in the hosting provider's server-side secrets, and verify the live URL.
 - [ ] Complete an end-to-end check using an approved de-identified MRI; this is separate from the synthetic smoke test.
 - [ ] Configure private artifact access in the hosting provider, deploy, and verify the live URL.
@@ -34,11 +42,12 @@ The paired bootstrap comparison reportedly found no convincing overall improveme
 
 ## Project contents
 
-- `app.py` — Streamlit upload, inference dashboard, warnings, and JSON download.
+- `app.py` — multi-section Streamlit research dashboard, inference, threshold/Grad-CAM controls, model comparison, measured timing, and PDF/JSON exports.
 - `src/brain_tumor/models.py` — existing EfficientNet-B0 and U-Net architecture definitions.
 - `src/brain_tumor/data.py` — existing classifier and segmenter preprocessing.
 - `src/brain_tumor/explain.py` — classifier Grad-CAM attribution visualization.
 - `src/brain_tumor/inference.py` — checkpoint validation/loading, secure private artifact retrieval, input validation, prediction, preliminary consistency checks, and JSON-ready report.
+- `src/brain_tumor/reports.py` — in-memory PDF research report generation from the current inference outputs.
 - `train_classifier.py`, `train_segmenter.py` — training workflows (not invoked by the web app).
 - `evaluate_classifier.py`, `evaluate_segmenter.py` — evaluation scripts.
 - `tests/` — architecture, preprocessing, loss, and inference-contract tests.
@@ -104,4 +113,4 @@ The earlier proposed contribution remains a set of research hypotheses. The smal
 
 See [docs/online_platform_deployment.md](docs/online_platform_deployment.md) for Streamlit Community Cloud setup, private artifact retrieval, server-side secret configuration, local paths, resource limitations and pre-deployment checks.
 
-Do not call the application deployed until the hosting provider returns a real URL and a smoke test confirms that the live process can load both intended checkpoints and run inference. The current feature branch has not been deployed or live-verified.
+Do not call the application deployed until the hosting provider returns a real URL and a smoke test confirms that the live process can load both intended checkpoints and run inference. The final-review enhancement branch has not yet been deployed or live-verified.

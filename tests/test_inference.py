@@ -120,6 +120,10 @@ def test_segmenter_checkpoint_loads_and_returns_binary_aligned_mask(tmp_path, mo
     image = Image.fromarray(np.zeros((64, 80, 3), dtype=np.uint8), mode="RGB")
     result = inference.predict_segmentation(loaded, image, meta, "cpu", threshold=0.5)
     assert result["mask_native"].shape == (32, 32)
+    assert result["probability_map"].shape == (32, 32)
+    assert result["probability_map"].dtype == np.float32
+    assert float(result["probability_map"].min()) >= 0.0
+    assert float(result["probability_map"].max()) <= 1.0
     assert set(np.unique(result["mask_native"])).issubset({0, 1})
     assert result["predicted_foreground_pixels"] == 32 * 32
     assert result["foreground_pixel_fraction"] == 1.0
