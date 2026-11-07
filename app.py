@@ -1051,9 +1051,25 @@ def show_patient_support_page() -> None:
         "loss of consciousness, or breathing difficulty, contact local emergency services or go to an emergency department immediately."
     )
 
-    st.subheader("Questions to take to the specialist")
-    for question in CARE_QUESTIONS:
-        st.markdown(f"- {question}")
+    st.subheader("Prepare for a specialist appointment")
+    selected_questions = st.multiselect(
+        "Choose the questions you want to discuss",
+        CARE_QUESTIONS,
+        default=CARE_QUESTIONS[:4],
+        key="education_care_questions",
+    )
+    question_text = "Questions for my specialist\\n\\n" + "\\n".join(
+        f"- {question}" for question in selected_questions
+    )
+    st.download_button(
+        "Download appointment question list",
+        data=question_text,
+        file_name="brain-tumour-specialist-questions.txt",
+        mime="text/plain",
+        use_container_width=True,
+        disabled=not selected_questions,
+    )
+    st.caption("This creates a simple discussion aid, not a medical record. No symptom history or personal medical details are requested.")
 
     st.subheader("Evidence-based reading")
     for title, url in EDUCATION_SOURCES.items():
