@@ -1058,7 +1058,7 @@ def show_patient_support_page() -> None:
         default=CARE_QUESTIONS[:4],
         key="education_care_questions",
     )
-    question_text = "Questions for my specialist\\n\\n" + "\\n".join(
+    question_text = "Questions for my specialist\n\n" + "\n".join(
         f"- {question}" for question in selected_questions
     )
     st.download_button(
