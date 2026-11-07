@@ -867,17 +867,17 @@ def show_mri_pattern_explorer(result: dict[str, Any] | None) -> None:
     st.markdown(f"### {selected_pattern}")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.markdown('<div class="education-card"><div class="education-card-kicker">01 · What you see</div>', unsafe_allow_html=True)
-        st.write(pattern["what"])
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.caption("01 · WHAT YOU SEE")
+            st.write(pattern["what"])
     with c2:
-        st.markdown('<div class="education-card"><div class="education-card-kicker">02 · Why it matters</div>', unsafe_allow_html=True)
-        st.write(pattern["why"])
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.caption("02 · WHY IT MATTERS")
+            st.write(pattern["why"])
     with c3:
-        st.markdown('<div class="education-card education-card-caution"><div class="education-card-kicker">03 · What it does not prove</div>', unsafe_allow_html=True)
-        st.write(pattern["not_proof"])
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.caption("03 · WHAT IT DOES NOT PROVE")
+            st.write(pattern["not_proof"])
 
     with st.container(border=True):
         st.markdown(f"**Sequence context: {selected_sequence}**")
