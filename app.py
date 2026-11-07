@@ -21,6 +21,10 @@ from src.brain_tumor.inference import (
     validate_uploaded_image,
 )
 from src.brain_tumor.reports import build_pdf_report
+from src.brain_tumor.education import (
+    BRAIN_LANDMARKS, CARE_QUESTIONS, EDUCATION_SOURCES, MRI_PATTERN_GUIDE,
+    MRI_SEQUENCE_GUIDE, PATIENT_SUPPORT_TIPS, TUMOUR_OVERVIEWS, URGENT_WARNING_SIGNS,
+)
 
 
 st.set_page_config(
@@ -189,6 +193,22 @@ st.markdown(
     .sidebar-name {font-size:1.02rem; font-weight:760; color:#eef9ff; letter-spacing:-.03em;}
     .sidebar-label {font-size:.62rem; text-transform:uppercase; letter-spacing:.15em; font-weight:800; color:#68cddd; margin:.5rem 0 .35rem;}
     .footer-note {color:#7893aa; font-size:.72rem; letter-spacing:.02em; padding:.2rem 0;}
+    .education-card {
+      min-height: 205px; height: 100%; padding: 1rem 1.05rem; border-radius: 15px;
+      background: linear-gradient(145deg,rgba(19,42,62,.94),rgba(11,27,43,.94));
+      border: 1px solid var(--line); box-shadow: 0 8px 22px rgba(0,0,0,.13);
+      color: var(--text-soft); line-height: 1.55;
+    }
+    .education-card-caution {border-color:rgba(242,195,108,.35); background:linear-gradient(145deg,rgba(65,49,28,.42),rgba(23,30,39,.9));}
+    .education-card-kicker {font-size:.63rem; color:#69d5e2; letter-spacing:.13em; font-weight:800; text-transform:uppercase; margin-bottom:.6rem;}
+    .brain-map-wrap {
+      padding:1rem; border:1px solid var(--line); border-radius:17px;
+      background:radial-gradient(ellipse at 50% 32%,rgba(35,99,128,.26),transparent 60%),rgba(9,24,39,.85);
+      overflow:hidden;
+    }
+    .brain-map-label {font-size:.65rem; color:#70dce8; font-weight:800; letter-spacing:.14em; margin:.15rem .2rem .5rem;}
+    .brain-map-wrap svg {display:block; width:100%; max-height:340px;}
+    .brain-map-foot {font-size:.68rem; color:#8ba9bd; border-top:1px solid var(--line); padding:.65rem .2rem .1rem;}
     @media (max-width: 760px) {
       .block-container {padding:4rem 1rem 2.5rem !important;}
       .hero-grid {grid-template-columns:1fr;}
@@ -815,7 +835,236 @@ def show_research_page() -> None:
     )
 
 
-NAV_ITEMS = ["Overview", "MRI Analysis", "Classification", "Segmentation", "Explainable AI", "Research & Metrics"]
+
+def show_mri_pattern_explorer(result: dict[str, Any] | None) -> None:
+    st.markdown('<div class="section-kicker">Plain-language imaging guide</div>', unsafe_allow_html=True)
+    st.header("MRI Pattern Explorer")
+    st.write(
+        "Explore what common MRI terms describe, why radiologists consider them, and what they cannot prove. "
+        "This is a learning guide, not an automated reading of your scan."
+    )
+    st.warning(
+        "A bright or dark area is not a diagnosis. The same appearance can have different causes, "
+        "and interpretation requires the complete MRI study, sequence labels, clinical history, and a radiologist."
+    )
+
+    left, right = st.columns([1.05, 1])
+    with left:
+        selected_pattern = st.selectbox(
+            "Choose an imaging pattern",
+            list(MRI_PATTERN_GUIDE),
+            key="education_mri_pattern",
+        )
+    with right:
+        selected_sequence = st.selectbox(
+            "Choose the sequence context",
+            list(MRI_SEQUENCE_GUIDE),
+            key="education_mri_sequence",
+        )
+
+    pattern = MRI_PATTERN_GUIDE[selected_pattern]
+    sequence = MRI_SEQUENCE_GUIDE[selected_sequence]
+    st.markdown(f"### {selected_pattern}")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown('<div class="education-card"><div class="education-card-kicker">01 · What you see</div>', unsafe_allow_html=True)
+        st.write(pattern["what"])
+        st.markdown("</div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown('<div class="education-card"><div class="education-card-kicker">02 · Why it matters</div>', unsafe_allow_html=True)
+        st.write(pattern["why"])
+        st.markdown("</div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown('<div class="education-card education-card-caution"><div class="education-card-kicker">03 · What it does not prove</div>', unsafe_allow_html=True)
+        st.write(pattern["not_proof"])
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with st.container(border=True):
+        st.markdown(f"**Sequence context: {selected_sequence}**")
+        st.write(sequence["plain"])
+        st.caption(sequence["look_for"])
+        st.info(pattern["context"])
+
+    st.subheader("A guide to the main MRI sequences")
+    sequence_columns = st.columns(3)
+    for index, (name, details) in enumerate(MRI_SEQUENCE_GUIDE.items()):
+        with sequence_columns[index % 3]:
+            with st.container(border=True):
+                st.markdown(f"**{name}**")
+                st.write(details["plain"])
+                st.caption(details["look_for"])
+
+    st.subheader("Your latest uploaded image")
+    if result is not None and result.get("image") is not None:
+        image_col, note_col = st.columns([1, 1.25])
+        with image_col:
+            st.image(result["image"], caption="Latest uploaded 2D image", use_container_width=True)
+        with note_col:
+            st.info(
+                "The image shown here is not automatically assessed for the pattern selected above. "
+                "The current classifier predicts one of four dataset classes and the U-Net proposes a foreground mask; "
+                "neither system identifies or confirms these radiology signs."
+            )
+            st.caption("A single exported image may omit sequence type, slice position, orientation, scale, and other DICOM metadata.")
+    else:
+        st.info("Run an MRI analysis first to see the latest uploaded image here. The pattern guide is available without an upload.")
+
+    st.markdown(
+        "For help understanding the wording of a real report, see "
+        "[How to read your brain MRI report — RadiologyInfo](https://www.radiologyinfo.org/en/info/article-brain-mri-report)."
+    )
+
+
+def show_brain_landmarks_page() -> None:
+    st.markdown('<div class="section-kicker">Anatomy orientation guide</div>', unsafe_allow_html=True)
+    st.header("Brain Anatomy & Landmarks")
+    st.write(
+        "Learn where major brain structures sit and what they generally do. "
+        "The diagram is a simplified side-view teaching schematic, not a patient-specific MRI locator."
+    )
+    orientation = st.selectbox(
+        "MRI viewing plane",
+        ["Axial", "Coronal", "Sagittal"],
+        key="education_mri_plane",
+    )
+    orientation_help = {
+        "Axial": "Horizontal slices divide the head into upper and lower portions. Scroll through the series to move from the top of the head toward the skull base.",
+        "Coronal": "Front-facing slices divide the head into front and back portions. A series moves from the face toward the back of the head.",
+        "Sagittal": "Side-facing slices divide the head into left and right portions. A midline slice can show structures such as the corpus callosum, ventricles, brainstem, and pituitary region.",
+    }
+    st.info(orientation_help[orientation])
+    st.caption("Always use the R/L markers and orientation information shown by the radiology viewer. Display conventions can vary.")
+
+    diagram = """
+    <div class="brain-map-wrap">
+      <div class="brain-map-label">LATERAL VIEW · CONCEPTUAL ONLY · NOT TO SCALE</div>
+      <svg viewBox="0 0 720 330" role="img" aria-label="Simplified side-view brain schematic with major anatomical regions">
+        <path d="M112 174 C84 143 99 99 139 83 C153 45 201 31 239 52 C266 21 320 28 343 58 C390 42 438 74 436 116 C473 140 467 185 438 204 C444 239 417 267 381 265 C350 291 311 280 291 260 C255 282 213 266 199 246 C164 257 126 233 132 204 C115 200 105 188 112 174Z"
+          fill="#14344b" stroke="#6bd8e5" stroke-width="3"/>
+        <path d="M121 171 C104 140 123 105 157 92 C182 78 207 86 222 108 C222 143 208 175 187 204 C164 217 136 204 121 171Z"
+          fill="#2a83a0" fill-opacity=".85" stroke="#85e9f0" stroke-width="1.5"/>
+        <path d="M191 88 C221 54 273 55 302 75 C315 101 302 132 280 151 C248 155 222 141 207 119Z"
+          fill="#397fae" fill-opacity=".9" stroke="#91d8fa" stroke-width="1.5"/>
+        <path d="M203 151 C235 139 273 146 296 170 C300 199 283 224 255 235 C222 231 198 210 187 185Z"
+          fill="#218e91" fill-opacity=".92" stroke="#8de9dc" stroke-width="1.5"/>
+        <path d="M302 77 C340 61 392 75 423 112 C441 143 426 176 397 190 C367 187 343 165 324 143Z"
+          fill="#5b78bb" fill-opacity=".88" stroke="#b1c4ff" stroke-width="1.5"/>
+        <path d="M334 204 C356 184 393 184 415 205 C433 226 413 253 388 258 C359 263 338 243 334 223Z"
+          fill="#9874c7" fill-opacity=".9" stroke="#d8c2ff" stroke-width="1.5"/>
+        <path d="M300 227 C315 226 326 236 329 250 L324 285 L301 285 L294 253Z"
+          fill="#c18a51" fill-opacity=".95" stroke="#f1c88f" stroke-width="1.5"/>
+        <g fill="#eaf7ff" font-family="Arial, sans-serif" font-size="13" font-weight="600">
+          <text x="25" y="52">FRONT</text><text x="410" y="52">BACK</text>
+          <text x="32" y="280" font-size="11" fill="#a9c2d5">Simplified regions only</text>
+        </g>
+        <g stroke="#b6dce8" stroke-width="1.4" fill="none" opacity=".8">
+          <path d="M155 119 L91 85 L33 85"/><path d="M253 80 L253 35 L305 35"/>
+          <path d="M238 202 L183 276 L110 276"/><path d="M390 139 L480 98 L548 98"/>
+          <path d="M385 232 L470 276 L545 276"/><path d="M314 266 L314 310 L365 310"/>
+        </g>
+        <g fill="#eaf7ff" font-family="Arial, sans-serif" font-size="12">
+          <text x="34" y="76">Frontal</text><text x="309" y="39">Parietal</text>
+          <text x="38" y="270">Temporal</text><text x="552" y="102">Occipital</text>
+          <text x="550" y="280">Cerebellum</text><text x="371" y="314">Brainstem</text>
+        </g>
+      </svg>
+      <div class="brain-map-foot">Educational orientation aid only · Not for identifying a lesion's location on an uploaded image</div>
+    </div>
+    """
+    st.markdown(diagram, unsafe_allow_html=True)
+
+    selected_landmark = st.selectbox(
+        "Explore an anatomical landmark",
+        list(BRAIN_LANDMARKS),
+        key="education_brain_landmark",
+    )
+    landmark = BRAIN_LANDMARKS[selected_landmark]
+    a, b, c = st.columns(3)
+    with a:
+        with st.container(border=True):
+            st.markdown("**Where it is**")
+            st.write(landmark["location"])
+    with b:
+        with st.container(border=True):
+            st.markdown("**What it generally does**")
+            st.write(landmark["role"])
+    with c:
+        with st.container(border=True):
+            st.markdown("**If affected**")
+            st.write(landmark["possible_effects"])
+
+    st.subheader("Landmark quick reference")
+    quick_columns = st.columns(3)
+    for index, (name, details) in enumerate(BRAIN_LANDMARKS.items()):
+        with quick_columns[index % 3]:
+            with st.container(border=True):
+                st.markdown(f"**{name}**")
+                st.caption(details["location"])
+    st.warning(
+        "Symptoms cannot reliably pinpoint a lesion, and a single 2D image cannot establish its 3D location. "
+        "Reliable localization needs the complete image series and spatial/orientation metadata, typically from DICOM."
+    )
+
+
+def show_patient_support_page() -> None:
+    st.markdown('<div class="section-kicker">Patient and caregiver education</div>', unsafe_allow_html=True)
+    st.header("Patient Support & Care Guidance")
+    st.write(
+        "Practical information for preparing questions, supporting day-to-day wellbeing, and understanding what specialist care may involve."
+    )
+    st.error(
+        "There is no proven home remedy, food, herb, or supplement that cures a brain tumour. "
+        "Do not delay medical assessment or replace a clinician's treatment plan with home remedies."
+    )
+
+    selected_topic = st.selectbox(
+        "Choose a topic to learn about",
+        list(TUMOUR_OVERVIEWS),
+        key="education_care_topic",
+    )
+    with st.container(border=True):
+        st.markdown(f"**{selected_topic}**")
+        st.write(TUMOUR_OVERVIEWS[selected_topic])
+        st.caption(
+            "This topic selector is for general education only. Do not choose a condition based on this app's AI output."
+        )
+
+    st.subheader("Supportive steps that may help at home")
+    st.caption("These steps support comfort and coordination of care; they do not treat or shrink a tumour.")
+    care_columns = st.columns(2)
+    for index, (title, description) in enumerate(PATIENT_SUPPORT_TIPS):
+        with care_columns[index % 2]:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.write(description)
+
+    st.info(
+        "Active surveillance is a specialist-led plan involving scheduled follow-up and imaging for selected cases. "
+        "It is not the same as ignoring a finding or attempting to treat it at home."
+    )
+
+    st.subheader("When to seek urgent medical help")
+    for sign in URGENT_WARNING_SIGNS:
+        st.markdown(f"- {sign}")
+    st.warning(
+        "For a first seizure, a seizure lasting over 5 minutes, sudden extremely severe headache, "
+        "loss of consciousness, or breathing difficulty, contact local emergency services or go to an emergency department immediately."
+    )
+
+    st.subheader("Questions to take to the specialist")
+    for question in CARE_QUESTIONS:
+        st.markdown(f"- {question}")
+
+    st.subheader("Evidence-based reading")
+    for title, url in EDUCATION_SOURCES.items():
+        st.markdown(f"- [{title}]({url})")
+    st.caption(
+        "Educational content is not a substitute for an individual assessment. Treatment decisions depend on the specific diagnosis, "
+        "pathology and molecular results when relevant, imaging, symptoms, and the treating team's assessment."
+    )
+
+
+NAV_ITEMS = ["Overview", "MRI Analysis", "Classification", "Segmentation", "Explainable AI", "MRI Pattern Explorer", "Brain Anatomy & Landmarks", "Patient Support & Care Guidance", "Research & Metrics"]
 with st.sidebar:
     st.markdown(
         '<div class="sidebar-brand"><div class="sidebar-mark">◎</div><div><div class="sidebar-overline">NEURO · AI</div><div class="sidebar-name">Brain MRI Lab</div></div></div>',
@@ -843,6 +1092,12 @@ elif active_page == "Segmentation":
     show_segmentation_page(latest)
 elif active_page == "Explainable AI":
     show_explainability_page(latest)
+elif active_page == "MRI Pattern Explorer":
+    show_mri_pattern_explorer(latest)
+elif active_page == "Brain Anatomy & Landmarks":
+    show_brain_landmarks_page()
+elif active_page == "Patient Support & Care Guidance":
+    show_patient_support_page()
 elif active_page == "Research & Metrics":
     show_research_page()
 
