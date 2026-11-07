@@ -599,29 +599,28 @@ def show_mri_analysis() -> None:
             "input_metadata": metadata,
             "image": original,
         }
-        if errors:
-            st.markdown(
-                '<div class="analysis-status analysis-status-partial">'
-                '<div class="analysis-status-icon">!</div>'
-                '<div><div class="analysis-status-title">Analysis finished with limited outputs</div>'
-                '<div class="analysis-status-note">One or more model stages did not return an output. Review the messages below.</div></div>'
-                '</div>',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                '<div class="analysis-status">'
-                '<div class="analysis-status-icon">✓</div>'
-                '<div><div class="analysis-status-title">Analysis complete</div>'
-                '<div class="analysis-status-note">Model processing finished. Review the results below.</div></div>'
-                '</div>',
-                unsafe_allow_html=True,
-            )
-
     result = current_result()
     if result is None:
         st.info("Run analysis to generate outputs. The trained checkpoints remain private and are not stored with the uploaded image.")
         return
+    if result["errors"]:
+        st.markdown(
+            '<div class="analysis-status analysis-status-partial">'
+            '<div class="analysis-status-icon">!</div>'
+            '<div><div class="analysis-status-title">Analysis finished with limited outputs</div>'
+            '<div class="analysis-status-note">One or more model stages did not return an output. Review the messages below.</div></div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="analysis-status">'
+            '<div class="analysis-status-icon">✓</div>'
+            '<div><div class="analysis-status-title">Analysis complete</div>'
+            '<div class="analysis-status-note">Model processing finished. Review the results below.</div></div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
     show_analysis_results(result, threshold)
 
 
