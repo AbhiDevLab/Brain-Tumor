@@ -156,7 +156,36 @@ st.markdown(
       background:rgba(13,29,46,.86) !important; border:1px solid var(--line) !important; border-radius:13px; overflow:hidden;
     }
     [data-testid="stChart"] {background:rgba(13,29,46,.46); border:1px solid var(--line); border-radius:14px; padding:.45rem;}
-    [data-testid="stProgress"] > div > div {background:linear-gradient(90deg,#2db9d0,#76e5ed) !important;}
+    [data-testid="stProgress"] [role="progressbar"] {
+      background:#20364a !important; border-radius:999px !important;
+      height:7px !important; overflow:hidden !important;
+    }
+    [data-testid="stProgress"] [role="progressbar"] > div {
+      background:linear-gradient(90deg,#239bb5,#55d8d9) !important;
+      border-radius:999px !important;
+    }
+    .analysis-status {
+      display:flex; align-items:center; gap:.85rem; padding:.85rem 1rem;
+      margin:.55rem 0 1rem; border:1px solid rgba(86,211,184,.22);
+      border-left:3px solid #45c9a7; border-radius:12px;
+      background:linear-gradient(100deg,rgba(23,65,63,.38),rgba(13,31,46,.82));
+    }
+    .analysis-status-icon {
+      flex:0 0 30px; width:30px; height:30px; display:flex; align-items:center;
+      justify-content:center; border-radius:50%; color:#8af0ce; font-weight:850;
+      background:rgba(69,201,167,.13); border:1px solid rgba(104,227,192,.25);
+    }
+    .analysis-status-title {color:#e7fff7; font-size:.88rem; font-weight:750; letter-spacing:.01em;}
+    .analysis-status-note {color:#9dbebd; font-size:.73rem; margin-top:.12rem;}
+    .analysis-status-partial {
+      border-color:rgba(242,195,108,.22); border-left-color:#d5a84e;
+      background:linear-gradient(100deg,rgba(72,57,31,.36),rgba(13,31,46,.82));
+    }
+    .analysis-status-partial .analysis-status-icon {
+      color:#f4d28e; background:rgba(213,168,78,.13); border-color:rgba(213,168,78,.25);
+    }
+    .analysis-status-partial .analysis-status-title {color:#fff2d5;}
+    .analysis-status-partial .analysis-status-note {color:#c7b99d;}
     [data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {background:#71e2ed !important; border-color:#71e2ed !important;}
     [data-baseweb="input"] input, [data-baseweb="textarea"] textarea {
       background:#0b1b2c !important; color:#eff8ff !important; border-color:var(--line-strong) !important;
@@ -519,7 +548,7 @@ def show_mri_analysis() -> None:
         segmentations: dict[str, dict[str, Any]] = {}
         errors: list[str] = []
         timings = {"classification_seconds": 0.0, "bce_unet_seconds": 0.0, "bce_dice_seconds": 0.0}
-        progress = st.progress(0, text="Preparing model inference…")
+        progress = st.progress(0)
 
         try:
             started = time.perf_counter()
@@ -535,7 +564,7 @@ def show_mri_analysis() -> None:
             errors.append("The private classifier checkpoint could not be retrieved or loaded. Check server-side artifact configuration.")
         except Exception:
             errors.append("Classifier inference failed. No classification output is available.")
-        progress.progress(35, text="Classifier stage completed")
+        progress.progress(35)
 
         jobs = [("BCE U-Net", "segmenter", "bce_unet_seconds")]
         if compare_enabled:
@@ -557,8 +586,9 @@ def show_mri_analysis() -> None:
                 errors.append(f"The {label} checkpoint could not be retrieved or loaded.")
             except Exception:
                 errors.append(f"{label} inference failed. No mask is available.")
-            progress.progress(65 + int(30 * (index + 1) / len(jobs)), text=f"{label} stage completed")
-        progress.progress(100, text="Analysis complete")
+            progress.progress(65 + int(30 * (index + 1) / len(jobs)))
+        progress.progress(100)
+        progress.empty()
         st.session_state["analysis_result"] = {
             "classification": classification,
             "segmentations": segmentations,
@@ -569,6 +599,24 @@ def show_mri_analysis() -> None:
             "input_metadata": metadata,
             "image": original,
         }
+        if errors:
+            st.markdown(
+                '<div class="analysis-status analysis-status-partial">'
+                '<div class="analysis-status-icon">!</div>'
+                '<div><div class="analysis-status-title">Analysis finished with limited outputs</div>'
+                '<div class="analysis-status-note">One or more model stages did not return an output. Review the messages below.</div></div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                '<div class="analysis-status">'
+                '<div class="analysis-status-icon">✓</div>'
+                '<div><div class="analysis-status-title">Analysis complete</div>'
+                '<div class="analysis-status-note">Model processing finished. Review the results below.</div></div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
 
     result = current_result()
     if result is None:
